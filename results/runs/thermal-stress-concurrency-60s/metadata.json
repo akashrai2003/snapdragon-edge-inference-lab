@@ -1,0 +1,10 @@
+{
+  "experiment_id": "thermal-stress-concurrency",
+  "timestamp": 1793295850.7939017,
+  "device_id": "realme-gt8-pro",
+  "model_id": "lfm3-vl-2b",
+  "metadata": {
+    "concurrency": 2,
+    "target_duration": 60
+  }
+}

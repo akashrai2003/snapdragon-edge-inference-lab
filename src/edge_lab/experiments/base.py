@@ -66,8 +66,14 @@ class ExperimentResult:
 
         # 2. Save summary.json
         summary_file = output_dir / "summary.json"
+
+        def _json_default(obj: Any) -> Any:
+            if hasattr(obj, "item"):
+                return obj.item()
+            return str(obj)
+
         with open(summary_file, "w", encoding="utf-8") as f:
-            json.dump(self.summary, f, indent=2)
+            json.dump(self.summary, f, indent=2, default=_json_default)
 
         # 3. Save trials.csv
         trials_file = output_dir / "trials.csv"

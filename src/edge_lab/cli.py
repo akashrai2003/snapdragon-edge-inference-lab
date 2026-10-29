@@ -342,6 +342,79 @@ def run_resolution_benchmark(
     console.print(f"Total Trials: {len(result.trials)}")
 
 
+@benchmark_app.command("stress")
+def run_stress_benchmark(
+    duration: Annotated[
+        int, typer.Option("--duration", "-d", help="Sustained test duration in seconds")
+    ] = 60,
+    concurrency: Annotated[
+        int, typer.Option("--concurrency", "-c", help="Number of concurrent client workers")
+    ] = 2,
+    document: Annotated[
+        Path | None,
+        typer.Option("--document", "-doc", help="Path to evaluation document or chart image"),
+    ] = None,
+    output_dir: Annotated[
+        Path, typer.Option("--output", "-o", help="Directory to save stress results")
+    ] = Path("results/runs/stress-latest"),
+):
+    """Execute sustained thermal stress and multi-client concurrent load test."""
+    import logging
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+    from edge_lab.experiments.stress import StressExperiment
+    from edge_lab.reporting.thermal_charts import generate_thermal_trajectory_chart
+
+    model_cfg = load_model_config(Path("configs/models/lfm3-vl-2b.yaml"))
+    adb = AdbClient()
+
+    console.print(
+        Panel.fit(
+            f"[bold cyan]Snapdragon 8 Elite — Concurrency & Thermal Stress Benchmark[/bold cyan]\n"
+            f"Concurrency: [bold yellow]{concurrency} parallel clients[/bold yellow] | "
+            f"Duration: [bold yellow]{duration} seconds[/bold yellow]"
+        )
+    )
+
+    runner = StressExperiment(
+        adb=adb,
+        output_dir=output_dir,
+        model_config=model_cfg,
+    )
+
+    doc_path = document or Path("assets/images/documents/chart_financial_multi.png")
+    exp_res = runner.run(
+        duration_seconds=duration,
+        concurrency=concurrency,
+        local_document_image=doc_path,
+    )
+
+    console.print(
+        f"[bold green]✓ Stress test completed successfully. Saved to {output_dir}[/bold green]"
+    )
+    summary = exp_res.summary
+    console.print(f"Total Requests: {summary.get('total_requests')}")
+    console.print(
+        f"Aggregate Throughput: [bold green]{summary.get('aggregate_tokens_per_sec')} tokens/sec[/bold green]"
+    )
+    thermal = summary.get("thermal", {})
+    console.print(
+        f"Battery Temp: {thermal.get('initial_battery_temp_c')}°C -> Peak {thermal.get('peak_battery_temp_c')}°C"
+    )
+    console.print(
+        f"Peak CPU Prime Core Temp: [bold red]{thermal.get('peak_cpu_prime_temp_c')}°C[/bold red]"
+    )
+    console.print(f"Peak GPU Temp: [bold magenta]{thermal.get('peak_gpu_temp_c')}°C[/bold magenta]")
+
+    # Generate thermal trajectory chart
+    csv_p = output_dir / "thermal_timeseries.csv"
+    if csv_p.exists():
+        chart_p = output_dir / "thermal_trajectory.png"
+        generate_thermal_trajectory_chart(csv_p, chart_p)
+        console.print(f"[green]✓ Generated Thermal Trajectory Chart: {chart_p}[/green]")
+
+
 # =========================================================================
 # Profiling Subcommands
 # =========================================================================

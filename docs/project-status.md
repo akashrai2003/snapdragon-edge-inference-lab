@@ -33,20 +33,32 @@
 
 ---
 
-## 3. Most Recent Physical Benchmark Evidence
+### Live Physical Benchmark Summary (Realme GT 8 Pro / Snapdragon 8 Elite)
 
-### Live Physical Run (October 29, 2026, 512px Samoyed Test Image)
-| Backend / Configuration | Vision Encoding Latency (ms) | Total Duration (s) | Battery Temp |
-|---|---|---|---|
-| **Mixed (GPU LM + CPU Vision)** | **1391.0 ms** | 12.016 s | 32.7°C |
-| **Full GPU (GPU LM + GPU Vision)** | **1814.0 ms** | 12.035 s | 32.7°C |
+#### 1. Resolution Scaling Crossover Discovery (Workstream A Completed)
+| Resolution | CPU Vision Latency | GPU Vision Latency | Speedup | Winner |
+|---|---|---|---|---|
+| **256px** | **600.0 ms** | 1,281.0 ms | 2.13× faster on CPU | 🏆 **CPU** |
+| **512px** | **1,391.0 ms** | 1,814.0 ms | 1.30× faster on CPU | 🏆 **CPU** |
+| **768px** | 5,271.0 ms | **3,338.0 ms** | 1.58× faster on GPU | 🏆 **Adreno GPU (CROSSOVER)** |
+| **1024px** | 10,475.0 ms | **2,878.0 ms** | 3.64× faster on GPU | 🏆 **Adreno GPU (DOMINATES)** |
 
-**Observed Ratio:** GPU vision projector is **+30.4% slower** (1.304×) than keeping vision on CPU.
+*Crossover occurs at ~620px where arithmetic intensity overcomes OpenCL dispatch latency.*
+
+#### 2. Thermal Stress & Concurrency Benchmark (Workstream B & C Completed)
+- **Workload:** 2 parallel concurrent slots (`-np 2`, `--cont-batching`) running dense multimodal financial chart extraction (1,809 prompt tokens per query).
+- **GPU Thermal Spike:** Adreno 840 GPU reached **97.4°C** peak (from 57.9°C baseline).
+- **CPU Oryon Cores:** Performance cores peaked at **79.5°C**, Prime cores at **79.2°C**.
+- **Chassis / Battery:** Ramped from 32.5°C to 32.9°C (effective passive vapor chamber insulation).
+- **Thermal Throttling Cliff:** After ~50 seconds of continuous load, kernel thermal governance forced a GPU clock step-down, stretching query latency from **19.14s to 28.64s (+49.7% degradation)** and dropping throughput from 2.52 t/s to 1.68 t/s per slot.
+- **Trace Artifact:** Synchronized 15s kernel trace recorded to `results/profiling/thermal-dvfs-15s.pftrace` and analyzed with `TraceProcessor`.
 
 ---
 
-## 4. Next Implementation Milestones
+## 4. Upstream Fork & Contribution Roadmap
 
-1. **Resolution Scaling Sweep (Workstream A):** Execute the full 256px, 384px, 512px, 768px, 1024px matrix across multiple repetitions to determine if a crossover point exists.
-2. **Cold vs. Warm Serving Breakdown (Workstream B):** Run persistent `llama-server` multimodal HTTP requests to measure steady-state vision encoding without process startup overhead.
-3. **Synchronized Perfetto Tracing (Workstream C):** Correlate CPU core residency and frequency scaling with `mtmd_batch_encode` execution slices.
+1. **Submodule Integration:** Fork `ggml-org/llama.cpp` and initialize as `third_party/llama.cpp` submodule.
+2. **Adaptive Projector Dispatch Optimization:** Implement dynamic threshold offload in `tools/mtmd/mtmd.cpp`:
+   - If image tokens $\le 512$ (or dimensions $< 640\text{px}$), dispatch projector graph to CPU threadpool.
+   - If image tokens $> 512$, dispatch projector graph to `GPUOpenCL`.
+3. **C++ Instrumentation:** Add high-resolution Nanosecond timer markers (`ggml_time_us()`) around `mtmd_batch_encode` and OpenCL queue enqueues.

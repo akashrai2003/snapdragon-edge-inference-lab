@@ -68,7 +68,9 @@ class PerfettoProfiler:
         return caps
 
     def start_trace(
-        self, config_content: str, remote_trace_path: str = "/data/misc/perfetto-traces/trace.pftrace"
+        self,
+        config_content: str,
+        remote_trace_path: str = "/data/misc/perfetto-traces/trace.pftrace",
     ) -> int:
         """Start a background tracing session with the provided protobuf text configuration.
 

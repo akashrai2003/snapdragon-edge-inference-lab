@@ -33,7 +33,14 @@ These guides are written to build senior-level expertise in edge AI systems engi
 - Automated TraceProcessor SQL analysis in Python.
 - Visualizing traces at [https://ui.perfetto.dev/](https://ui.perfetto.dev/).
 
-### 5. [Upstream Contribution & C++ Instrumentation Guide](contributing-upstream/fork-and-instrumentation-guide.md)
+### 5. [Thermal Throttling, DVFS Governors, and Concurrent Edge Inference](profiling/thermal-throttling-and-concurrency.md)
+- Physical testing of Snapdragon 8 Elite under sustained multimodal document load.
+- Multi-zone thermal dynamics: Adreno 840 climbing to 97.4°C vs Oryon cores at 79.5°C vs battery insulation.
+- The 50-second thermal cliff: Latency stretch from 19.1s to 28.6s (+49.7%) under thermal soak.
+- Multi-client continuous batching (`--cont-batching`, `-np 2`, `--kv-unified`) in `llama-server`.
+- Engineering mitigations: thermal duty cycling, adaptive resolution routing, and asymmetric offload.
+
+### 6. [Upstream Contribution & C++ Instrumentation Guide](contributing-upstream/fork-and-instrumentation-guide.md)
 - Source code roadmap: where multimodal code lives in `llama.cpp` (`tools/mtmd/` and `ggml-opencl.cpp`).
 - Setting up a fork and adding it as a Git submodule.
 - Compiling instrumented binaries using the Snapdragon Docker toolchain without breaking working builds.

@@ -1,0 +1,9 @@
+request_id,worker_id,duration_seconds,prompt_tokens,completion_tokens,tokens_per_sec,status_code,success,error
+1,2,19.781,1809,48,2.43,200,True,
+1,1,19.784,1809,48,2.43,200,True,
+2,2,19.165,1810,48,2.5,200,True,
+2,1,19.197,1810,48,2.5,200,True,
+3,2,19.082,1810,48,2.52,200,True,
+3,1,19.085,1810,48,2.52,200,True,
+4,2,28.645,1809,48,1.68,200,True,
+4,1,28.636,1809,48,1.68,200,True,

@@ -1,0 +1,48 @@
+{
+  "experiment_id": "thermal-stress-concurrency",
+  "device_id": "realme-gt8-pro",
+  "soc": "Qualcomm Snapdragon 8 Elite (SM8850)",
+  "model_id": "liquid-lfm3-vl-2b-q4_k_m",
+  "concurrency": 2,
+  "duration_seconds": 85.57,
+  "total_requests": 8,
+  "successful_requests": 8,
+  "failed_requests": 0,
+  "aggregate_tokens_per_sec": 4.49,
+  "latency_stats": {
+    "n": 8,
+    "mean": 21.672,
+    "median": 19.489,
+    "std_dev": 4.311,
+    "min": 19.082,
+    "max": 28.645,
+    "cv": 0.1989,
+    "p10": 19.084,
+    "p90": 28.639,
+    "ci95_low": 19.085,
+    "ci95_high": 24.215
+  },
+  "throughput_stats": {
+    "n": 8,
+    "mean": 2.282,
+    "median": 2.465,
+    "std_dev": 0.374,
+    "min": 1.68,
+    "max": 2.52,
+    "cv": 0.1637,
+    "p10": 1.68,
+    "p90": 2.52,
+    "ci95_low": 2.055,
+    "ci95_high": 2.52
+  },
+  "thermal": {
+    "initial_battery_temp_c": 32.5,
+    "peak_battery_temp_c": 32.9,
+    "peak_cpu_perf_temp_c": 79.5,
+    "peak_cpu_prime_temp_c": 79.2,
+    "peak_gpu_temp_c": 97.4,
+    "thermal_status_max": 1,
+    "min_prime_freq_mhz": 883.2,
+    "throttling_observed": true
+  }
+}
