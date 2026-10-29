@@ -1,0 +1,52 @@
+device:
+  id: "realme-gt8-pro"
+  name: "Realme GT 8 Pro"
+  model: "RMX5210"
+  product: "RMX5210IN"
+  serial: "3C15B5004AJ00000"  # Configurable, overrideable via --serial or EDGE_LAB_DEVICE_SERIAL
+  soc:
+    vendor: "Qualcomm"
+    name: "Snapdragon 8 Elite Gen 5"
+    model: "SM8850"
+    platform: "canoe"
+    arch: "aarch64"
+    cpu:
+      cores_total: 8
+      microarchitecture: "Qualcomm Oryon"
+      clusters:
+        - name: "Performance"
+          cores: [0, 1, 2, 3, 4, 5]
+          max_freq_khz: 3628800
+        - name: "Prime"
+          cores: [6, 7]
+          max_freq_khz: 4608000
+      features:
+        - "fp"
+        - "asimd"
+        - "sve"
+        - "sve2"
+        - "sme"
+        - "bf16"
+        - "i8mm"
+    gpu:
+      name: "Qualcomm Adreno 840"
+      opencl_version: "OpenCL 3.0"
+      opencl_device_name: "QUALCOMM Adreno(TM) 840"
+      opencl_platform_name: "QUALCOMM Snapdragon(TM)"
+      memory_capacity_mib: 7555
+    npu:
+      name: "Qualcomm Hexagon HTP"
+      device_id: "HTP0"
+      architecture: "v81"
+      fastrpc_domain: "nsp1000"
+  memory:
+    total_kb: 15473636
+  os:
+    android_version: 16
+    kernel_version: "Linux 6.6+"
+    rooted: false
+  storage_paths:
+    runtime_bin_dir: "/data/local/tmp/llama.cpp/bin"
+    runtime_lib_dir: "/data/local/tmp/llama.cpp/lib"
+    opencl_cache_dir: "/data/local/tmp/llama.cpp/cl-cache"
+    model_storage_dir: "/sdcard/Download/lfm3"

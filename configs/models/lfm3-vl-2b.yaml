@@ -1,0 +1,28 @@
+model:
+  id: "lfm3-vl-2b"
+  name: "Liquid AI LFM3-VL-2B"
+  architecture: "hybrid" # Liquid Foundation Model (convolution + linear/recurrent state + attention)
+  family: "LiquidAI/lfm3"
+  parameters: "1.73B (language) + ~200M (vision)"
+  language_component:
+    filename: "LFM3-VL-2B-Q4_K_M.gguf"
+    quantization: "Q4_K_M"
+    device_path: "/sdcard/Download/lfm3/LFM3-VL-2B-Q4_K_M.gguf"
+    size_bytes: 1099627808
+  vision_projector:
+    filename: "mmproj-LFM3-VL-2B-Q8_0.gguf"
+    quantization: "Q8_0"
+    device_path: "/sdcard/Download/lfm3/mmproj-LFM3-VL-2B-Q8_0.gguf"
+    size_bytes: 203031872
+  default_inference:
+    threads: 4
+    context_size: 2048
+    temperature: 0.1
+    top_p: 0.9
+    max_tokens: 128
+    prompt: "Describe this image in detail."
+  test_image:
+    filename: "test-512.jpg"
+    device_path: "/sdcard/Download/lfm3/test-512.jpg"
+    size_bytes: 135572
+    base_dimension: 512

@@ -1,0 +1,35 @@
+experiment:
+  id: "resolution-crossover"
+  name: "Workstream A: Image Resolution Crossover Experiment"
+  description: "Evaluate vision projector encoding latency across scaling resolutions comparing CPU vs GPU placement"
+  model_config: "configs/models/lfm3-vl-2b.yaml"
+  device_config: "configs/devices/realme-gt8-pro.yaml"
+  resolutions: [256, 384, 512, 768, 1024]
+  configurations:
+    - id: "cpu_all"
+      name: "CPU LM + CPU Vision"
+      ngl: 0
+      device: null
+      mmproj_offload: false
+      mmproj_device: null
+    - id: "gpu_lm_cpu_vision"
+      name: "GPU LM + CPU Vision (Mixed)"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: false
+      mmproj_device: null
+    - id: "gpu_all"
+      name: "GPU LM + GPU Vision"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: true
+      mmproj_device: "GPUOpenCL"
+  trials:
+    warmup_runs: 1
+    measured_repetitions: 5
+    cooldown_seconds: 4.0
+    randomize_order: true
+    seed: 42
+    threads: 4
+    timeout_seconds: 120
+    max_battery_temp_celsius: 42.0

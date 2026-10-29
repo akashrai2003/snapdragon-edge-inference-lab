@@ -1,0 +1,16 @@
+runtime:
+  id: "llamacpp-hexagon"
+  engine: "llama.cpp"
+  version: "ac8e169"
+  target: "snapdragon-android"
+  backend: "HTP0"
+  status: "experimental"
+  cli_flags:
+    ngl: 99
+    device: "HTP0"
+  environment:
+    LD_LIBRARY_PATH: "/data/local/tmp/llama.cpp/lib"
+    GGML_HEXAGON_ARCH: "v81"
+    GGML_HEXAGON_DMA64: "1"
+    ADSP_LIBRARY_PATH: "/data/local/tmp/llama.cpp/lib"
+    CDSP_LIBRARY_PATH: "/data/local/tmp/llama.cpp/lib"

@@ -1,0 +1,16 @@
+runtime:
+  id: "llamacpp-opencl"
+  engine: "llama.cpp"
+  version: "ac8e169"
+  target: "snapdragon-android"
+  backend: "GPUOpenCL"
+  cli_flags:
+    ngl: 99
+    device: "GPUOpenCL"
+    mmproj_device: "GPUOpenCL"
+    mmproj_offload: true
+  environment:
+    LD_LIBRARY_PATH: "/data/local/tmp/llama.cpp/lib"
+    GGML_OPENCL_PLATFORM: "QUALCOMM Snapdragon(TM)"
+    GGML_OPENCL_DEVICE: "QUALCOMM Adreno(TM) 840"
+    GGML_OPENCL_KERNEL_CACHE_DIR: "/data/local/tmp/llama.cpp/cl-cache"

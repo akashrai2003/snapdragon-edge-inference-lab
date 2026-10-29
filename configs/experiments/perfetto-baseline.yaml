@@ -1,0 +1,19 @@
+experiment:
+  id: "perfetto-baseline"
+  name: "Workstream C: Perfetto Hardware Profiling"
+  description: "Capture CPU scheduling, frequency transitions, and thermal events during vision encoding"
+  model_config: "configs/models/lfm3-vl-2b.yaml"
+  device_config: "configs/devices/realme-gt8-pro.yaml"
+  profiles:
+    - id: "cpu-scheduling"
+      config_path: "perfetto/configs/cpu-scheduling.pbtx"
+      duration_seconds: 15
+    - id: "inference-standard"
+      config_path: "perfetto/configs/inference-standard.pbtx"
+      duration_seconds: 20
+  workload:
+    resolution: 512
+    repetitions: 2
+    configurations:
+      - "gpu_lm_cpu_vision"
+      - "gpu_all"

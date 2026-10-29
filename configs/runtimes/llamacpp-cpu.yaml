@@ -1,0 +1,12 @@
+runtime:
+  id: "llamacpp-cpu"
+  engine: "llama.cpp"
+  version: "ac8e169"
+  target: "snapdragon-android"
+  backend: "CPU"
+  cli_flags:
+    ngl: 0
+    mmproj_offload: false
+    device: "none"
+  environment:
+    LD_LIBRARY_PATH: "/data/local/tmp/llama.cpp/lib"

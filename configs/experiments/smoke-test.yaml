@@ -1,0 +1,29 @@
+experiment:
+  id: "smoke-test"
+  name: "Safe Hardware Smoke Test (Single 512px Trial per Backend)"
+  description: "Minimal controlled verification of CPU, Mixed, and GPU vision inference paths"
+  model_config: "configs/models/lfm3-vl-2b.yaml"
+  device_config: "configs/devices/realme-gt8-pro.yaml"
+  resolutions: [512]
+  configurations:
+    - id: "gpu_lm_cpu_vision"
+      name: "GPU LM + CPU Vision (Mixed)"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: false
+      mmproj_device: null
+    - id: "gpu_all"
+      name: "GPU LM + GPU Vision"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: true
+      mmproj_device: "GPUOpenCL"
+  trials:
+    warmup_runs: 0
+    measured_repetitions: 1
+    cooldown_seconds: 2.0
+    randomize_order: false
+    seed: 42
+    threads: 4
+    timeout_seconds: 60
+    max_battery_temp_celsius: 40.0

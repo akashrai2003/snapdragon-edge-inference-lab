@@ -1,0 +1,34 @@
+experiment:
+  id: "cold-vs-warm"
+  name: "Workstream B: Cold-Start vs Persistent Inference"
+  description: "Disentangle process startup, OpenCL context creation, kernel caching, and steady-state inference"
+  model_config: "configs/models/lfm3-vl-2b.yaml"
+  device_config: "configs/devices/realme-gt8-pro.yaml"
+  server:
+    port: 8080
+    host_port: 8080
+    threads: 4
+    context_size: 2048
+  modes:
+    - id: "cold_process"
+      description: "Separate process invocation per trial (llama-mtmd-cli)"
+      repetitions: 5
+    - id: "warm_server"
+      description: "Persistent model server (llama-server) queried via HTTP"
+      requests: 5
+      track_phases:
+        - "first_request"
+        - "second_request"
+        - "subsequent_requests"
+        - "repeated_image"
+        - "fresh_image"
+  configurations:
+    - id: "gpu_lm_cpu_vision"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: false
+    - id: "gpu_all"
+      ngl: 99
+      device: "GPUOpenCL"
+      mmproj_offload: true
+      mmproj_device: "GPUOpenCL"

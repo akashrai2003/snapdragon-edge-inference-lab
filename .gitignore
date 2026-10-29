@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Linters
+.ruff_cache/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Perfetto raw traces (do not commit gigabyte binary traces)
+*.pftrace
+*.pb
+perfetto-trace.pftrace
+results/runs/**/*.pftrace
+
+# Model weights and proprietary binaries (NEVER COMMIT)
+*.gguf
+*.bin
+*.onnx
+*.engine
+*.tflite
+*.so
+*.elf
+assets/images/private/
