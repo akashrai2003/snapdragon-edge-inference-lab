@@ -1,0 +1,22 @@
+{
+  "256px": {
+    "cpu_ms": 600.0,
+    "gpu_ms": 1281.0,
+    "gpu_speedup": 0.468
+  },
+  "512px": {
+    "cpu_ms": 1391.0,
+    "gpu_ms": 1814.0,
+    "gpu_speedup": 0.767
+  },
+  "768px": {
+    "cpu_ms": 5271.0,
+    "gpu_ms": 3338.0,
+    "gpu_speedup": 1.579
+  },
+  "1024px": {
+    "cpu_ms": 10475.0,
+    "gpu_ms": 2878.0,
+    "gpu_speedup": 3.64
+  }
+}
