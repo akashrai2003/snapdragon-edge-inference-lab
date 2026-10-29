@@ -1,0 +1,10 @@
+ggml_opencl: selecting device 'QUALCOMM Adreno(TM) 840'
+llama_model_load: offloaded 99/99 layers to OpenCL
+mtmd_init: loading vision projector from /sdcard/Download/lfm3/mmproj-LFM3-VL-2B-Q8_0.gguf
+mtmd_image_preprocess: image resolution 512x512, patches=4
+mtmd batch encoding done in 1632 ms
+llama_perf_context_print:        load time =     450.20 ms
+llama_perf_context_print:  prompt eval time =     321.45 ms /   512 tokens (    0.63 ms per token,  1592.78 tokens per second)
+llama_perf_context_print:        eval time =    1245.20 ms /   128 tokens (    9.73 ms per token,   102.79 tokens per second)
+llama_perf_context_print:       total time =    3648.85 ms
+The image shows a fluffy white Samoyed dog sitting on a manicured green lawn in bright daylight.
