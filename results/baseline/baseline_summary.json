@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "device": "Realme GT 8 Pro (RMX5210)",
+    "soc": "Snapdragon 8 Elite Gen 5 (SM8850)",
+    "os": "Android 16",
+    "model": "Liquid AI LFM3-VL-2B (Q4_K_M)",
+    "projector": "mmproj-LFM3-VL-2B-Q8_0.gguf",
+    "image": "Samoyed test image (512px max dimension)",
+    "cpu_threads": 4
+  },
+  "text_benchmarks": {
+    "termux_cpu": {
+      "runtime": "llama.cpp b11967 (native Termux)",
+      "backend": "CPU",
+      "threads": 4,
+      "pp512_tokens_per_sec": 68.34,
+      "pp512_std": 5.39,
+      "tg128_tokens_per_sec": 25.93,
+      "tg128_std": 0.16,
+      "repetitions": 5
+    },
+    "snapdragon_cpu": {
+      "runtime": "llama.cpp ac8e169 (cross-compiled package)",
+      "backend": "CPU",
+      "threads": 4,
+      "pp512_tokens_per_sec": 103.98,
+      "pp512_std": 11.61,
+      "tg128_tokens_per_sec": 31.12,
+      "tg128_std": 0.32,
+      "repetitions": 3
+    },
+    "snapdragon_gpu": {
+      "runtime": "llama.cpp ac8e169 (cross-compiled package)",
+      "backend": "Adreno 840 GPUOpenCL (-ngl 99)",
+      "threads": 4,
+      "pp512_tokens_per_sec": 738.1,
+      "pp512_std": 4.67,
+      "tg128_tokens_per_sec": 44.48,
+      "tg128_std": 0.52,
+      "repetitions": 3
+    }
+  },
+  "vision_projector_512px": {
+    "cpu_lm_cpu_vision": {
+      "name": "CPU LM + CPU Vision",
+      "flags": "-ngl 0 --no-mmproj-offload",
+      "runs_ms": [
+        1952,
+        1579,
+        1590,
+        1953,
+        1977
+      ],
+      "median_ms": 1952
+    },
+    "gpu_lm_cpu_vision": {
+      "name": "GPU LM + CPU Vision (Mixed)",
+      "flags": "-ngl 99 --no-mmproj-offload",
+      "runs_ms": [
+        1718,
+        1632,
+        1570,
+        1594,
+        1725
+      ],
+      "median_ms": 1632
+    },
+    "gpu_lm_gpu_vision": {
+      "name": "GPU LM + GPU Vision",
+      "flags": "-ngl 99 --mmproj-offload --mmproj-device GPUOpenCL",
+      "runs_ms": [
+        2512,
+        2517,
+        2508,
+        2550,
+        2517
+      ],
+      "median_ms": 2517,
+      "explicit_individual_ms": 2572,
+      "first_complete_ms": 2360
+    }
+  },
+  "initial_resolution_scaling": {
+    "256px": 902,
+    "384px": 1429,
+    "512px": 3596,
+    "original_full": 167991
+  }
+}

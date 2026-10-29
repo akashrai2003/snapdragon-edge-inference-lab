@@ -1,0 +1,5 @@
+trial_index,configuration_id,resolution,is_warmup,success,vision_encoding_ms,prompt_eval_tps,eval_tps,duration_sec,battery_temp_c,thermal_status,error
+1,gpu_lm_cpu_vision,512,True,True,1421.0,,,12.727,32.6,0,
+2,gpu_all,512,True,True,1759.0,,,14.186,32.6,0,
+3,gpu_lm_cpu_vision,512,False,True,1391.0,,,12.016,32.7,0,
+4,gpu_all,512,False,True,1814.0,,,12.035,32.7,0,

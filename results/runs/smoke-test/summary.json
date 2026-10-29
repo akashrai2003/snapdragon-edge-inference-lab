@@ -1,0 +1,32 @@
+{
+  "res_512": {
+    "gpu_lm_cpu_vision": {
+      "n": 1,
+      "mean": 1391.0,
+      "median": 1391.0,
+      "std_dev": 0.0,
+      "min": 1391.0,
+      "max": 1391.0,
+      "cv": 0.0,
+      "p10": 1391.0,
+      "p90": 1391.0,
+      "ci95_low": null,
+      "ci95_high": null
+    },
+    "gpu_all": {
+      "n": 1,
+      "mean": 1814.0,
+      "median": 1814.0,
+      "std_dev": 0.0,
+      "min": 1814.0,
+      "max": 1814.0,
+      "cv": 0.0,
+      "p10": 1814.0,
+      "p90": 1814.0,
+      "ci95_low": null,
+      "ci95_high": null
+    },
+    "gpu_to_mixed_ratio": 1.304,
+    "cpu_speedup_over_gpu": 1.304
+  }
+}

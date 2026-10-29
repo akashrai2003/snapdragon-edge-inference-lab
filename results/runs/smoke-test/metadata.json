@@ -1,0 +1,16 @@
+{
+  "experiment_id": "smoke-test",
+  "timestamp": 1793293620.4046175,
+  "device_id": "configs/devices/realme-gt8-pro.yaml",
+  "model_id": "configs/models/lfm3-vl-2b.yaml",
+  "metadata": {
+    "resolutions": [
+      512
+    ],
+    "configurations": [
+      "gpu_lm_cpu_vision",
+      "gpu_all"
+    ],
+    "threads": 4
+  }
+}
