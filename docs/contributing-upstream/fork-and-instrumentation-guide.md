@@ -54,9 +54,17 @@ In your `snapdragon-edge-inference-lab` repository:
 cd /home/akash-ai/Desktop/Projects/snapdragon-edge-inference-lab
 mkdir -p third_party
 
-# Add your fork as a submodule tracking the working commit
+# Add your fork as a submodule (already configured)
 git submodule add https://github.com/akashrai2003/llama.cpp third_party/llama.cpp
 cd third_party/llama.cpp
+
+# Option A (Recommended): Branch off latest master to leverage recent Qualcomm commits
+# (Includes Adreno tiled Q4_K GEMM #30412, IM2COL_3D #30895, and Hexagon enhancements)
+git checkout master
+git checkout -b feat/adreno-adaptive-projector
+
+# Option B: Branch off the historical baseline commit (ac8e169)
+# Use this only if you want an exact byte-for-byte comparison against the baseline binaries
 git checkout ac8e1694d837b11ed0aab944a6a2eee34b9c4d80
 git checkout -b fix/adreno-vision-projector
 ```
