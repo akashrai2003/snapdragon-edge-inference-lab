@@ -55,18 +55,16 @@ When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, wh
 - **Prompt Processing (pp512):** Adreno 840 GPU OpenCL delivers **738.10 ± 4.67 tokens/sec**, representing a **7.10× speedup** over Snapdragon cross-compiled CPU inference (103.98 t/s).
 - **Text Generation (tg128):** Adreno 840 GPU achieves **44.48 ± 0.52 tokens/sec**, a **1.43× speedup** over CPU decode (31.12 t/s).
 
-### 2. Vision Projector Placement Anomaly (512px Input) & Resolution Inversion
-![Vision Projector Placement](results/baseline/vision_projector_placement.png)
+### 2. Vision Projector Placement Anomaly & Resolution Inversion
+![Vision Projector Resolution Scaling Comparison](results/baseline/vision_projector_scaling_comparison.png)
 
 At standard **512px resolution**, explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in **2517 ms median latency**, whereas keeping the vision projector on CPU took only **1632 ms median latency** (+54% GPU slowdown).
 
 #### ⚡ But at Higher Resolutions, the Relationship Completely Inverts!
-When evaluating across scaling resolutions on physical hardware, we discovered that this anomaly disappears as image dimensions grow:
-- **At 512px (Small):** CPU is **1.30× faster** (1,391 ms vs. 1,814 ms) — OpenCL dispatch and event synchronization overhead overwhelm the tiny matrix multiplication workload.
-- **At 768px (Medium):** GPU is **1.58× faster** (3,338 ms vs. 5,271 ms) — As patch count expands, arithmetic intensity crosses the compute-bound threshold into GPU acceleration.
-- **At 1024px (Large):** GPU is **3.64× FASTER** (2,878 ms vs. 10,475 ms) — Adreno 840 parallel ALUs crush CPU execution, completing vision encoding in **2.88 seconds compared to 10.48 seconds on CPU**!
-
-*(See [Section 3: Resolution Scaling Discovery](#3-resolution-scaling-discovery-the-620px-crossover) below for the full empirical matrix and crossover plot).*
+As demonstrated in the comparison plot above, the anomaly is **strictly a small-token phenomenon** that reverses as image dimensions scale:
+- **At 256px & 512px (Small):** CPU is up to **2.13× faster** (600 ms vs. 1,281 ms at 256px; 1,391 ms vs. 1,814 ms at 512px) — OpenCL dispatch and queue synchronization overhead exceed the brief compute workload.
+- **At 768px (Medium):** GPU becomes **1.58× faster** (3,338 ms vs. 5,271 ms) — As patch count grows quadratically, arithmetic intensity crosses the compute-bound threshold into GPU acceleration.
+- **At 1024px (Large):** GPU is **3.64× FASTER** (2,878 ms vs. 10,475 ms) — The Adreno 840 parallel ALUs crush CPU execution, completing vision encoding in **2.88 seconds compared to 10.48 seconds on CPU** (saving 7.6 seconds per image)!
 
 ---
 
