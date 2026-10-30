@@ -13,20 +13,22 @@ A research-grade edge AI inference benchmarking, profiling, and optimization pla
 
 This project provides an automated, reproducible platform to investigate and optimize edge LLM and VLM inference across ARM Oryon CPUs, Qualcomm Adreno GPUs, and Qualcomm Hexagon NPUs.
 
-### The Immediate Scientific Question
-When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, why does CPU vision-projector execution outperform requested Adreno 840 GPU projector offloading by up to **54% at a 512px image resolution**, and does this relationship change under scaling resolution or persistent-server execution?
+### The Immediate Scientific Question & Discovery
+When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, why does CPU vision-projector execution outperform requested Adreno 840 GPU projector offloading by up to **54% at 512px image resolution**, and how does this behavior scale across higher resolutions?
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│  512px Vision Projector Latency (Snapdragon 8 Elite / Adreno 840)      │
-├────────────────────────────────┬───────────────────┬──────────────────┤
-│ Configuration                  │ Median Latency    │ Comparison       │
-├────────────────────────────────┼───────────────────┼──────────────────┤
-│ Mixed (GPU LM + CPU Vision)    │ 1632 ms           │ 1.00× (Fastest)  │
-│ CPU Only (CPU LM + CPU Vision) │ 1952 ms           │ 1.20× slower     │
-│ Full GPU (GPU LM + GPU Vision) │ 2517 ms           │ 1.54× slower     │
-└────────────────────────────────┴───────────────────┴──────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  Vision Projector Scaling Summary (Snapdragon 8 Elite / Adreno 840 vs. Oryon CPU)      │
+├──────────────┬───────────────────┬───────────────────┬────────────────┬────────────────┤
+│ Resolution   │ CPU Vision Latency│ GPU Vision Latency│ Speedup Ratio  │ Faster Engine  │
+├──────────────┼───────────────────┼───────────────────┼────────────────┼────────────────┤
+│ 256px        │ 600 ms            │ 1281 ms           │ 2.13× on CPU   │ 🏆 Oryon CPU   │
+│ 512px        │ 1391 ms           │ 1814 ms           │ 1.30× on CPU   │ 🏆 Oryon CPU   │
+│ 768px        │ 5271 ms           │ 3338 ms           │ 1.58× on GPU   │ 🏆 Adreno GPU  │
+│ 1024px       │ 10475 ms          │ 2878 ms           │ 3.64× on GPU   │ 🏆 Adreno GPU  │
+└──────────────┴───────────────────┴───────────────────┴────────────────┴────────────────┘
 ```
+**Conclusion:** The slowdown is **strictly a low-resolution phenomenon**. The crossover occurs at **~620px**. At $\ge 768\text{px}$, the Adreno 840 GPU dominates, finishing in **2.88s vs. 10.48s on CPU** at 1024px.
 
 ---
 
@@ -53,10 +55,18 @@ When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, wh
 - **Prompt Processing (pp512):** Adreno 840 GPU OpenCL delivers **738.10 ± 4.67 tokens/sec**, representing a **7.10× speedup** over Snapdragon cross-compiled CPU inference (103.98 t/s).
 - **Text Generation (tg128):** Adreno 840 GPU achieves **44.48 ± 0.52 tokens/sec**, a **1.43× speedup** over CPU decode (31.12 t/s).
 
-### 2. Vision Projector Placement Anomaly (512px Input)
+### 2. Vision Projector Placement Anomaly (512px Input) & Resolution Inversion
 ![Vision Projector Placement](results/baseline/vision_projector_placement.png)
 
-Explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in **2517 ms median latency**, whereas keeping the vision projector on CPU took only **1632 ms median latency** (+54% GPU slowdown).
+At standard **512px resolution**, explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in **2517 ms median latency**, whereas keeping the vision projector on CPU took only **1632 ms median latency** (+54% GPU slowdown).
+
+#### ⚡ But at Higher Resolutions, the Relationship Completely Inverts!
+When evaluating across scaling resolutions on physical hardware, we discovered that this anomaly disappears as image dimensions grow:
+- **At 512px (Small):** CPU is **1.30× faster** (1,391 ms vs. 1,814 ms) — OpenCL dispatch and event synchronization overhead overwhelm the tiny matrix multiplication workload.
+- **At 768px (Medium):** GPU is **1.58× faster** (3,338 ms vs. 5,271 ms) — As patch count expands, arithmetic intensity crosses the compute-bound threshold into GPU acceleration.
+- **At 1024px (Large):** GPU is **3.64× FASTER** (2,878 ms vs. 10,475 ms) — Adreno 840 parallel ALUs crush CPU execution, completing vision encoding in **2.88 seconds compared to 10.48 seconds on CPU**!
+
+*(See [Section 3: Resolution Scaling Discovery](#3-resolution-scaling-discovery-the-620px-crossover) below for the full empirical matrix and crossover plot).*
 
 ---
 
