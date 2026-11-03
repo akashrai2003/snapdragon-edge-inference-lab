@@ -56,15 +56,9 @@ When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, wh
 - **Text Generation (tg128):** Adreno 840 GPU achieves **44.48 ± 0.52 tokens/sec**, a **1.43× speedup** over CPU decode (31.12 t/s).
 
 ### 2. Vision Projector Placement Anomaly & Resolution Inversion
-![Vision Projector Resolution Scaling Comparison](results/baseline/vision_projector_scaling_comparison.png)
+![Vision Projector Placement Across Resolutions](results/baseline/vision_projector_placement.png)
 
-At standard **512px resolution**, explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in **2517 ms median latency**, whereas keeping the vision projector on CPU took only **1632 ms median latency** (+54% GPU slowdown).
-
-#### ⚡ But at Higher Resolutions, the Relationship Completely Inverts!
-As demonstrated in the comparison plot above, the anomaly is **strictly a small-token phenomenon** that reverses as image dimensions scale:
-- **At 256px & 512px (Small):** CPU is up to **2.13× faster** (600 ms vs. 1,281 ms at 256px; 1,391 ms vs. 1,814 ms at 512px) — OpenCL dispatch and queue synchronization overhead exceed the brief compute workload.
-- **At 768px (Medium):** GPU becomes **1.58× faster** (3,338 ms vs. 5,271 ms) — As patch count grows quadratically, arithmetic intensity crosses the compute-bound threshold into GPU acceleration.
-- **At 1024px (Large):** GPU is **3.64× FASTER** (2,878 ms vs. 10,475 ms) — The Adreno 840 parallel ALUs crush CPU execution, completing vision encoding in **2.88 seconds compared to 10.48 seconds on CPU** (saving 7.6 seconds per image)!
+At standard **512px resolution**, explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in a **+54% GPU slowdown** (1632 ms on CPU vs 2517 ms on GPU). However, as captured directly in the empirical scaling measurements above, this is strictly a small-tensor dispatch artifact ($< 620\text{px}$). At $\ge 768\text{px}$, arithmetic intensity saturates the Adreno 840 parallel ALUs, achieving a **3.64× GPU speedup at 1024px** (finishing in 2.88 seconds vs. 10.48 seconds on CPU).
 
 ---
 
