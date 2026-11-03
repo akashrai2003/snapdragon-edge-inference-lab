@@ -56,7 +56,7 @@ When running Liquid AI's **LFM3-VL-2B** on a **Snapdragon 8 Elite (SM8850)**, wh
 - **Text Generation (tg128):** Adreno 840 GPU achieves **44.48 ± 0.52 tokens/sec**, a **1.43× speedup** over CPU decode (31.12 t/s).
 
 ### 2. Vision Projector Placement Anomaly & Resolution Inversion
-![Vision Projector Placement Across Resolutions](results/baseline/vision_projector_placement.png)
+![Vision Projector Placement Across Resolutions](results/baseline/vision_projector_multires_placement.png)
 
 At standard **512px resolution**, explicitly offloading the vision projector to the Adreno GPU (`--mmproj-offload --mmproj-device GPUOpenCL`) resulted in a **+54% GPU slowdown** (1632 ms on CPU vs 2517 ms on GPU). However, as captured directly in the empirical scaling measurements above, this is strictly a small-tensor dispatch artifact ($< 620\text{px}$). At $\ge 768\text{px}$, arithmetic intensity saturates the Adreno 840 parallel ALUs, achieving a **3.64× GPU speedup at 1024px** (finishing in 2.88 seconds vs. 10.48 seconds on CPU).
 
