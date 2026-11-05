@@ -120,7 +120,8 @@ class ResolutionCrossoverExperiment(BaseExperiment):
                     mmproj_offload=cfg.mmproj_offload,
                     mmproj_device=cfg.mmproj_device,
                     threads=threads,
-                    warmup=False,
+                    warmup=self.exp_config.trials.process_warmup,
+                    image_max_tokens=self.exp_config.trials.image_max_tokens,
                     timeout_seconds=timeout,
                 )
 
@@ -184,7 +185,8 @@ class ResolutionCrossoverExperiment(BaseExperiment):
                         mmproj_offload=cfg.mmproj_offload,
                         mmproj_device=cfg.mmproj_device,
                         threads=threads,
-                        warmup=False,
+                        warmup=self.exp_config.trials.process_warmup,
+                        image_max_tokens=self.exp_config.trials.image_max_tokens,
                         timeout_seconds=timeout,
                     )
 
@@ -252,6 +254,8 @@ class ResolutionCrossoverExperiment(BaseExperiment):
                 "resolutions": res_list,
                 "configurations": [c.id for c in self.exp_config.configurations],
                 "threads": threads,
+                "process_warmup": self.exp_config.trials.process_warmup,
+                "image_max_tokens": self.exp_config.trials.image_max_tokens,
             },
         )
 

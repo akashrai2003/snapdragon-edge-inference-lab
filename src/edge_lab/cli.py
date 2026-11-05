@@ -342,6 +342,47 @@ def run_resolution_benchmark(
     console.print(f"Total Trials: {len(result.trials)}")
 
 
+@benchmark_app.command("warm-encode")
+def run_warm_encode_benchmark(
+    image: Annotated[
+        Path, typer.Option("--image", "-i", help="Local base image (resized per resolution)")
+    ],
+    resolutions: Annotated[
+        str, typer.Option("--resolutions", "-r", help="Comma-separated longest-edge sizes")
+    ] = "256,512,768,1024",
+    requests_per_resolution: Annotated[
+        int, typer.Option("--requests", "-n", help="Requests per resolution and configuration")
+    ] = 5,
+    image_max_tokens: Annotated[
+        int | None,
+        typer.Option("--image-max-tokens", help="Pass --image-max-tokens to llama-server"),
+    ] = None,
+    threads: Annotated[int, typer.Option("--threads", "-t", help="CPU threads")] = 4,
+    output_dir: Annotated[
+        Path, typer.Option("--output", "-o", help="Directory to save run results")
+    ] = Path("results/runs/warm-encode-latest"),
+):
+    """Measure steady-state vision encode latency in a persistent llama-server."""
+    import logging
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+    from edge_lab.experiments.warm_encode import WarmEncodeExperiment
+
+    model_cfg = load_model_config(Path("configs/models/lfm3-vl-2b.yaml"))
+    runner = WarmEncodeExperiment(adb=AdbClient(), output_dir=output_dir, model_config=model_cfg)
+    res_list = [int(r) for r in resolutions.split(",") if r.strip()]
+    result = runner.run(
+        local_base_image=image,
+        resolutions=res_list,
+        requests_per_resolution=requests_per_resolution,
+        image_max_tokens=image_max_tokens,
+        threads=threads,
+    )
+    console.print(f"[bold green]✓ Warm encode benchmark saved to {output_dir}[/bold green]")
+    console.print_json(json.dumps(result.summary, default=str))
+
+
 @benchmark_app.command("stress")
 def run_stress_benchmark(
     duration: Annotated[

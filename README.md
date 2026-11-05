@@ -116,6 +116,7 @@ Explore the full documentation suite designed for personal mastery and open-sour
 1. **[Master Documentation Index](docs/README.md):** Complete navigation and learning roadmap.
 2. **[Thermal Throttling, DVFS Governors & Concurrency Guide](docs/profiling/thermal-throttling-and-concurrency.md):** Thermodynamics of mobile silicon, thermal governors, and mitigation strategies.
 3. **[The Vision Projector Anomaly Deep Dive](docs/findings/vision-projector-anomaly-analysis.md):** Mathematical root-cause breakdown and crossover proof.
+   - **[Why Image Processing Feels Slow on the Phone](docs/findings/image-latency-root-cause.md):** Image-token budget (up to 4096 tokens per photo), `--no-warmup` measurement artifact behind the ~620px "crossover", and concrete fixes.
 4. **[Edge AI Inference on Qualcomm Architecture](docs/methodology/edge-inference-deep-dive.md):** UMA memory, Oryon CPU vs Adreno GPU vs Hexagon NPU, and Roofline modeling.
 5. **[Android Perfetto Systems Profiling Guide](docs/profiling/perfetto-systems-guide.md):** Zero-root ftrace recording on Android 16 and TraceProcessor SQL analytics.
 6. **[Upstream Contribution & C++ Instrumentation Guide](docs/contributing-upstream/fork-and-instrumentation-guide.md):** Navigating `tools/mtmd/`, compiling with the Snapdragon container, and adding adaptive offloading.

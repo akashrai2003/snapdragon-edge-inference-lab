@@ -24,6 +24,10 @@ class VisionEncodingTiming:
     device_selected: str | None = None
     warnings: list[str] = field(default_factory=list)
     fallback_detected: bool = False
+    clip_graph_splits: int | None = None
+    clip_flash_attn: bool | None = None
+    clip_lazy_warmup_ms: float | None = None
+    image_tokens: int | None = None
 
 
 @dataclass
@@ -112,6 +116,29 @@ def parse_mtmd_cli_output(log_content: str) -> VisionEncodingTiming:
     if "fallback to CPU" in log_content or "not supported by backend" in log_content:
         timing.fallback_detected = True
         timing.warnings.append("Fallback to CPU detected in runtime logs")
+    if "CLIP graph uses unsupported operators" in log_content:
+        timing.fallback_detected = True
+        timing.warnings.append("CLIP graph has ops unsupported by the projector backend")
+
+    # 8. CLIP graph diagnostics (last reported values win: the real image graph follows warmup)
+    splits = re.findall(r"graph splits = (\d+), nodes = \d+", log_content)
+    if splits:
+        timing.clip_graph_splits = int(splits[-1])
+    fattn = re.findall(r"flash attention is (enabled|disabled)", log_content)
+    if fattn:
+        timing.clip_flash_attn = fattn[-1] == "enabled"
+
+    # 9. Lazy projector warmup inside the encode window (only logged by instrumented builds)
+    match_lazy = re.search(
+        r"lazy warmup \(buffers not allocated\) took\s+(\d+(?:\.\d+)?)\s*ms", log_content
+    )
+    if match_lazy:
+        timing.clip_lazy_warmup_ms = float(match_lazy.group(1))
+
+    # 10. Number of image tokens fed to the language model
+    img_batches = re.findall(r"decoding image batch \d+/\d+, n_tokens_batch = (\d+)", log_content)
+    if img_batches:
+        timing.image_tokens = sum(int(n) for n in img_batches)
 
     return timing
 
@@ -177,3 +204,42 @@ def parse_llama_bench_output(output: str) -> list[LlamaBenchRow]:
                 )
 
     return rows
+
+
+@dataclass
+class ServerImageTiming:
+    """Per-request image timings scraped from a llama-server log segment."""
+
+    encode_ms: float | None = None
+    decode_ms: float | None = None
+    image_tokens: int | None = None
+    n_encodes: int = 0
+    n_decode_batches: int = 0
+
+
+_FLOAT = r"(\d+(?:\.\d+)?)"
+
+
+def parse_server_image_timings(log_segment: str) -> ServerImageTiming:
+    """Parse image encode/decode timings from the log lines of exactly one request.
+
+    Encode time comes from "mtmd batch encoded in N ms" (llama-server, instrumented fork)
+    or "image slice encoded in N ms" (mtmd-helper). Decode time and image token counts come
+    from mtmd-helper ("decoding image batch i/n, n_tokens_batch = N", "image decoded ... in N ms").
+    Values are summed over encodes and ubatches; missing values stay None.
+    """
+    result = ServerImageTiming()
+    enc = re.findall(rf"mtmd batch encoded in\s+{_FLOAT}\s*ms", log_segment)
+    if not enc:
+        enc = re.findall(rf"image slice encoded in\s+{_FLOAT}\s*ms", log_segment)
+    dec = re.findall(rf"image decoded \(batch \d+/\d+\) in\s+{_FLOAT}\s*ms", log_segment)
+    toks = re.findall(r"decoding image batch \d+/\d+, n_tokens_batch = (\d+)", log_segment)
+    if enc:
+        result.encode_ms = sum(float(x) for x in enc)
+        result.n_encodes = len(enc)
+    if dec:
+        result.decode_ms = sum(float(x) for x in dec)
+        result.n_decode_batches = len(dec)
+    if toks:
+        result.image_tokens = sum(int(x) for x in toks)
+    return result

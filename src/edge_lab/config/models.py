@@ -128,6 +128,9 @@ class TrialConfig(BaseModel):
     threads: int = 4
     timeout_seconds: int = 120
     max_battery_temp_celsius: float = 42.0
+    # False reproduces the historical runs (--no-warmup); True moves projector setup out of the timing
+    process_warmup: bool = False
+    image_max_tokens: int | None = None
 
 
 class ExperimentConfigurationItem(BaseModel):

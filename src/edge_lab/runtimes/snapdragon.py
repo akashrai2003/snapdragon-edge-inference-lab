@@ -58,6 +58,7 @@ class SnapdragonRuntime:
         warmup: bool = False,
         timeout_seconds: float = 120.0,
         extra_env: dict[str, str] | None = None,
+        image_max_tokens: int | None = None,
     ) -> RuntimeExecutionResult:
         """Run multimodal CLI inference (llama-mtmd-cli) on device."""
         env_vars = {
@@ -84,7 +85,12 @@ class SnapdragonRuntime:
         ]
 
         if not warmup:
+            # also skips projector warmup: the first encode then pays buffer allocation and
+            # lazy OpenCL kernel compilation inside the "mtmd batch encoding" window
             flags.append("--no-warmup")
+
+        if image_max_tokens is not None:
+            flags.append(f"--image-max-tokens {image_max_tokens}")
 
         if mmproj_offload:
             flags.append("--mmproj-offload")

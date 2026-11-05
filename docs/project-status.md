@@ -62,3 +62,4 @@
    - If image tokens $\le 512$ (or dimensions $< 640\text{px}$), dispatch projector graph to CPU threadpool.
    - If image tokens $> 512$, dispatch projector graph to `GPUOpenCL`.
 3. **C++ Instrumentation:** Add high-resolution Nanosecond timer markers (`ggml_time_us()`) around `mtmd_batch_encode` and OpenCL queue enqueues.
+4. **Re-validate the crossover warm (open):** The ~620px crossover was measured with `--no-warmup`, cold processes, n=1. See [image-latency-root-cause.md](findings/image-latency-root-cause.md). Run `edge-lab benchmark warm-encode` and `configs/experiments/resolution-crossover-warm.yaml` before building adaptive dispatch.

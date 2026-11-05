@@ -96,6 +96,8 @@ class ColdVsWarmExperiment(BaseExperiment):
         configuration: dict[str, Any],
         threads: int = 4,
         context_size: int = 2048,
+        extra_flags: list[str] | None = None,
+        log_path: str = "/data/local/tmp/llama-server.log",
     ) -> int:
         """Launch llama-server on device and establish port forwarding. Returns PID."""
         model_path = self.model_config.language_component.device_path
@@ -128,11 +130,14 @@ class ColdVsWarmExperiment(BaseExperiment):
         if device:
             flags.append(f"--device '{device}'")
 
+        if extra_flags:
+            flags.extend(extra_flags)
+
         env_prefix = (
             f"LD_LIBRARY_PATH='{self.runtime.lib_dir}' "
             f"GGML_OPENCL_KERNEL_CACHE_DIR='{self.runtime.cl_cache_dir}'"
         )
-        cmd = f"{env_prefix} nohup {self.runtime.bin_dir}/llama-server {' '.join(flags)} > /data/local/tmp/llama-server.log 2>&1 & echo $!"
+        cmd = f"{env_prefix} nohup {self.runtime.bin_dir}/llama-server {' '.join(flags)} > {log_path} 2>&1 & echo $!"
 
         res = self.adb.shell(cmd)
         server_pid = int(res.stdout.strip().split()[-1])
@@ -142,7 +147,7 @@ class ColdVsWarmExperiment(BaseExperiment):
 
         # Wait for server health endpoint
         url = f"http://127.0.0.1:{self.server_port}/health"
-        for _ in range(30):
+        for _ in range(90):
             try:
                 resp = requests.get(url, timeout=2.0)
                 if resp.status_code == 200:
@@ -152,7 +157,7 @@ class ColdVsWarmExperiment(BaseExperiment):
                 time.sleep(1.0)
 
         # If not ready, check log
-        log_res = self.adb.shell("cat /data/local/tmp/llama-server.log | tail -n 25")
+        log_res = self.adb.shell(f"tail -n 25 {log_path}")
         raise RuntimeError(f"llama-server failed to become ready. Log:\n{log_res.stdout}")
 
     def stop_persistent_server(self, server_pid: int) -> None:
