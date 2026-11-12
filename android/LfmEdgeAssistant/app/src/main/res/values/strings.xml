@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LFM</string>
-    <string name="widget_name">LFM · On-Device AI</string>
-    <string name="widget_description">Snapdragon Edge AI at your fingertips. Ask LFM anything or control your on-device engine.</string>
-    <string name="widget_title">On-device AI,&#10;right here.</string>
-    <string name="widget_ask">Ask LFM</string>
-    <string name="widget_ideas">Inspire me</string>
+    <string name="app_name">Cue</string>
+    <string name="widget_name">Cue · A little help</string>
+    <string name="widget_description">A little help, right here. Ask Cue a question or start a voice conversation.</string>
+    <string name="widget_title">A little help,\nright here.</string>
+    <string name="widget_ask">Ask anything</string>
+    <string name="widget_ideas">Speak</string>
 </resources>

@@ -1,0 +1,10 @@
+{
+  "runtime": {
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.12.17/sherpa-onnx-v1.12.17-android-static-link-onnxruntime.tar.bz2",
+    "sha256": "d2b7680584539a1fc4b77bbd1bdce287ead6df479f033027baf991f2f4dd6ecd"
+  },
+  "model": {
+    "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2",
+    "sha256": "f170013b4716e41b62b9bfd809687c207cef798ef9bc6534d524e17af9b6561a"
+  }
+}

@@ -11,8 +11,8 @@ android {
         applicationId = "ai.snapdragon.edge"
         minSdk = 29
         targetSdk = 33
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 4
+        versionName = "3.1.0"
     }
 
     buildTypes {
@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
-    // Zero heavy dependencies: uses pure Android framework APIs for ultra-lightweight APK
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
 

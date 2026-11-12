@@ -22,11 +22,11 @@
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:src="@drawable/ic_spark"
-                android:contentDescription="LFM spark" />
+                android:contentDescription="Cue spark" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="lfm"
+                android:text="cue"
                 android:textSize="20sp"
                 android:fontFamily="sans-serif-medium"
                 android:letterSpacing="-0.04"
@@ -39,7 +39,7 @@
             android:id="@+id/btn_widget_power"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚡ Start Engine"
+            android:text="• Checking"
             android:textColor="#5C3A82"
             android:textSize="12sp"
             android:fontFamily="sans-serif-medium"
@@ -64,7 +64,7 @@
             android:layout_weight="1"
             android:text="@string/widget_title"
             android:fontFamily="serif"
-            android:textSize="23sp"
+            android:textSize="24sp"
             android:lineSpacingExtra="-2dp"
             android:textColor="#242128" />
 
@@ -73,7 +73,7 @@
             android:layout_height="56dp"
             android:src="@drawable/ic_spark"
             android:padding="6dp"
-            android:contentDescription="LFM spark art" />
+            android:contentDescription="Cue spark art" />
     </LinearLayout>
 
     <!-- Bottom Action Row: Ask LFM & Inspire me -->

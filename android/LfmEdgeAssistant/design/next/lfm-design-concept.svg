@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1880" height="1120" viewBox="0 0 1880 1120">
+<defs>
+<linearGradient id="art" x2="1" y2="1"><stop stop-color="#EBE0F5"/><stop offset=".55" stop-color="#D9C5EC"/><stop offset="1" stop-color="#F1DFD5"/></linearGradient>
+<radialGradient id="orb"><stop stop-color="#F9E9E0"/><stop offset=".5" stop-color="#D5B5E5"/><stop offset="1" stop-color="#8D6AB3"/></radialGradient>
+</defs>
+<rect x="0" y="0" width="1880" height="1120" rx="0" fill="#EEEAE3"/>
+<text x="48" y="52" fill="#29242E" font-family="sans-serif" font-size="30" font-weight="600">LFM / A little help, right when you need it.</text>
+<text x="48" y="84" fill="#776F7C" font-family="sans-serif" font-size="13" font-weight="400">PROPOSED DESIGN · App, floating assistant, voice and widget · 12 November 2026</text>
+<text x="48" y="118" fill="#645C68" font-family="sans-serif" font-size="16" font-weight="400">Warm ivory. Soft lilac. Clear actions. No hardware jargon in everyday screens.</text>
+<text x="48" y="173" fill="#514A56" font-family="sans-serif" font-size="15" font-weight="600">01 / HOME</text>
+<rect x="48" y="195" width="328" height="668" rx="34" fill="#29242E"/>
+<rect x="53" y="200" width="318" height="658" rx="30" fill="#F8F6F1"/>
+<text x="71" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="600">9:41</text>
+<text x="307" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="400">•••</text>
+<rect x="177" y="844" width="70" height="4" rx="2" fill="#29242E"/>
+<path d="M 81 252 Q 83.4 261.6 93 264 Q 83.4 266.4 81 276 Q 78.6 266.4 69 264 Q 78.6 261.6 81 252Z" fill="#7554A4"/>
+<text x="101" y="272" fill="#29242E" font-family="sans-serif" font-size="25" font-weight="600">lfm</text>
+<rect x="277" y="247" width="75" height="36" rx="18" fill="#E5EADD"/>
+<text x="290" y="270" fill="#526143" font-family="sans-serif" font-size="12" font-weight="500">• Ready</text>
+<text x="75" y="323" fill="#807587" font-family="sans-serif" font-size="10" font-weight="600">GOOD EVENING</text>
+<text x="75" y="363" fill="#29242E" font-family="serif" font-size="31" font-weight="400">Make room</text>
+<text x="75" y="401" fill="#29242E" font-family="serif" font-size="31" font-weight="400">for a good idea.</text>
+<text x="75" y="431" fill="#807587" font-family="sans-serif" font-size="12" font-weight="400">A fresh perspective, whenever you need it.</text>
+<rect x="73" y="455" width="278" height="176" rx="24" fill="url(#art)"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(0 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(36 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(72 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(108 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(144 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(180 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(216 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(252 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(288 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="526" rx="27" ry="53" transform="rotate(324 212 543)" fill="url(#orb)" opacity=".5"/>
+<ellipse cx="212" cy="543" rx="117" ry="44" transform="rotate(-20 212 543)" fill="none" stroke="#A88ABD" stroke-width=".8"/>
+<path d="M 110 486 Q 111.8 493.2 119 495 Q 111.8 496.8 110 504 Q 108.2 496.8 101 495 Q 108.2 493.2 110 486Z" fill="#7554A4"/>
+<path d="M 318 578 Q 319.4 583.6 325 585 Q 319.4 586.4 318 592 Q 316.6 586.4 311 585 Q 316.6 583.6 318 578Z" fill="#7554A4"/>
+<text x="113" y="609" fill="#705584" font-family="sans-serif" font-size="9" font-weight="400">FOLLOW A LITTLE CURIOSITY</text>
+<rect x="73" y="647" width="278" height="54" rx="27" fill="#29242E"/>
+<text x="94" y="680" fill="#FFFFFF" font-family="sans-serif" font-size="15" font-weight="500">Ask anything</text>
+<text x="314" y="681" fill="#D7BDED" font-family="sans-serif" font-size="24" font-weight="400">↗</text>
+<text x="75" y="734" fill="#29242E" font-family="sans-serif" font-size="15" font-weight="600">Start somewhere</text>
+<rect x="73" y="749" width="134" height="68" rx="18" fill="#F0E1D6"/>
+<path d="M 92 763 Q 93.4 768.6 99 770 Q 93.4 771.4 92 777 Q 90.6 771.4 85 770 Q 90.6 768.6 92 763Z" fill="#AA6B49"/>
+<text x="86" y="799" fill="#29242E" font-family="sans-serif" font-size="12" font-weight="400">A fresh idea  ↗</text>
+<rect x="217" y="749" width="134" height="68" rx="18" fill="#E4E9DE"/>
+<text x="231" y="776" fill="#657653" font-family="sans-serif" font-size="21" font-weight="400">≈</text>
+<text x="230" y="799" fill="#29242E" font-family="sans-serif" font-size="12" font-weight="400">Make it simple ↗</text>
+<text x="97" y="842" fill="#786E7D" font-family="sans-serif" font-size="11" font-weight="400">Conversations</text>
+<text x="262" y="842" fill="#786E7D" font-family="sans-serif" font-size="11" font-weight="400">Settings</text>
+<text x="412" y="173" fill="#514A56" font-family="sans-serif" font-size="15" font-weight="600">02 / CHAT</text>
+<rect x="412" y="195" width="328" height="668" rx="34" fill="#29242E"/>
+<rect x="417" y="200" width="318" height="658" rx="30" fill="#F8F6F1"/>
+<text x="435" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="600">9:41</text>
+<text x="671" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="400">•••</text>
+<rect x="541" y="844" width="70" height="4" rx="2" fill="#29242E"/>
+<text x="439" y="269" fill="#29242E" font-family="sans-serif" font-size="26" font-weight="400">‹</text>
+<path d="M 481 253 Q 483.0 261.0 491 263 Q 483.0 265.0 481 273 Q 479.0 265.0 471 263 Q 479.0 261.0 481 253Z" fill="#7554A4"/>
+<text x="500" y="270" fill="#29242E" font-family="sans-serif" font-size="24" font-weight="600">lfm</text>
+<text x="696" y="269" fill="#29242E" font-family="sans-serif" font-size="24" font-weight="400">+</text>
+<text x="439" y="319" fill="#807587" font-family="sans-serif" font-size="12" font-weight="400">A little perspective</text>
+<rect x="482" y="345" width="233" height="72" rx="19" fill="#EAE1F1"/>
+<text x="498" y="372" fill="#29242E" font-family="sans-serif" font-size="13" font-weight="400">How do I make a busy day</text>
+<text x="498" y="394" fill="#29242E" font-family="sans-serif" font-size="13" font-weight="400">feel a little less rushed?</text>
+<path d="M 451 445 Q 452.8 452.2 460 454 Q 452.8 455.8 451 463 Q 449.2 455.8 442 454 Q 449.2 452.2 451 445Z" fill="#7554A4"/>
+<text x="439" y="489" fill="#29242E" font-family="sans-serif" font-size="15" font-weight="500">Start with a little breathing room.</text>
+<text x="439" y="522" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">Choose one thing that matters most.</text>
+<text x="439" y="545" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">Give it twenty quiet minutes before</text>
+<text x="439" y="568" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">you open the rest of your day.</text>
+<rect x="437" y="599" width="278" height="82" rx="19" fill="#ECE5F4"/>
+<text x="453" y="626" fill="#7554A4" font-family="sans-serif" font-size="9" font-weight="600">TRY THIS</text>
+<text x="453" y="651" fill="#29242E" font-family="sans-serif" font-size="13" font-weight="400">“Today feels lighter if I finish…”</text>
+<rect x="437" y="701" width="77" height="36" rx="18" fill="#ECE8E2"/>
+<text x="450" y="724" fill="#645C68" font-family="sans-serif" font-size="12" font-weight="500">Copy</text>
+<rect x="523" y="701" width="111" height="36" rx="18" fill="#ECE8E2"/>
+<text x="536" y="724" fill="#645C68" font-family="sans-serif" font-size="12" font-weight="500">Read aloud</text>
+<rect x="437" y="765" width="276" height="58" rx="29" fill="#FFFFFF" stroke="#E4DFE8"/>
+<text x="455" y="800" fill="#89808C" font-family="sans-serif" font-size="14" font-weight="400">Ask anything…</text>
+<rect x="663" y="773" width="42" height="42" rx="21" fill="#29242E"/>
+<g fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"><rect x="681" y="784" width="6" height="12" rx="3"/><path d="M 677 792q 0 10 7 10q 7 0 7 -10 M684 802v4 M680 806h8"/></g>
+<text x="512" y="843" fill="#89808C" font-family="sans-serif" font-size="10" font-weight="400">Just you &amp; your ideas.</text>
+<text x="776" y="173" fill="#514A56" font-family="sans-serif" font-size="15" font-weight="600">03 / QUICK ASK</text>
+<rect x="776" y="195" width="328" height="668" rx="34" fill="#29242E"/>
+<rect x="781" y="200" width="318" height="658" rx="30" fill="#F8F6F1"/>
+<text x="799" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="600">9:41</text>
+<text x="1035" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="400">•••</text>
+<rect x="905" y="844" width="70" height="4" rx="2" fill="#29242E"/>
+<rect x="781" y="245" width="318" height="581" rx="0" fill="#D8DED2"/>
+<text x="806" y="301" fill="#5C6B54" font-family="serif" font-size="33" font-weight="400">Your day.</text>
+<text x="806" y="328" fill="#6E7A66" font-family="sans-serif" font-size="12" font-weight="400">A moment for what matters.</text>
+<rect x="803" y="357" width="274" height="103" rx="22" fill="#E9EDDF"/>
+<rect x="803" y="475" width="130" height="70" rx="18" fill="#B4C4B2"/>
+<rect x="946" y="475" width="131" height="70" rx="18" fill="#C5B6CD"/>
+<rect x="781" y="244" width="318" height="588" rx="0" fill="#29242E" fill-opacity=".24"/>
+<rect x="791" y="529" width="298" height="314" rx="27" fill="#F8F6F1"/>
+<rect x="918" y="539" width="44" height="3" rx="2" fill="#D6CCD9"/>
+<path d="M 818 559 Q 819.8 566.2 827 568 Q 819.8 569.8 818 577 Q 816.2 569.8 809 568 Q 816.2 566.2 818 559Z" fill="#7554A4"/>
+<text x="834" y="575" fill="#29242E" font-family="sans-serif" font-size="21" font-weight="600">lfm</text>
+<text x="1012" y="574" fill="#7C6B87" font-family="sans-serif" font-size="20" font-weight="400">↗</text>
+<text x="1052" y="574" fill="#7C6B87" font-family="sans-serif" font-size="24" font-weight="400">×</text>
+<text x="810" y="627" fill="#29242E" font-family="serif" font-size="27" font-weight="400">A little help,</text>
+<text x="810" y="662" fill="#29242E" font-family="serif" font-size="25" font-weight="400">right when you need it.</text>
+<text x="810" y="693" fill="#807587" font-family="sans-serif" font-size="12" font-weight="400">A question, an idea, or a fresh start.</text>
+<rect x="808" y="715" width="117" height="36" rx="18" fill="#ECE5F4"/>
+<text x="821" y="738" fill="#64428D" font-family="sans-serif" font-size="12" font-weight="500">Spark an idea ↗</text>
+<rect x="932" y="715" width="140" height="36" rx="18" fill="#ECE5F4"/>
+<text x="945" y="738" fill="#64428D" font-family="sans-serif" font-size="12" font-weight="500">Explain simply ↗</text>
+<rect x="802" y="765" width="276" height="58" rx="29" fill="#FFFFFF" stroke="#E4DFE8"/>
+<text x="820" y="800" fill="#89808C" font-family="sans-serif" font-size="14" font-weight="400">Ask anything…</text>
+<rect x="1028" y="773" width="42" height="42" rx="21" fill="#29242E"/>
+<g fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"><rect x="1046" y="784" width="6" height="12" rx="3"/><path d="M 1042 792q 0 10 7 10q 7 0 7 -10 M1049 802v4 M1045 806h8"/></g>
+<text x="1140" y="173" fill="#514A56" font-family="sans-serif" font-size="15" font-weight="600">04 / LISTENING</text>
+<rect x="1140" y="195" width="328" height="668" rx="34" fill="#29242E"/>
+<rect x="1145" y="200" width="318" height="658" rx="30" fill="#F8F6F1"/>
+<text x="1163" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="600">9:41</text>
+<text x="1399" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="400">•••</text>
+<rect x="1269" y="844" width="70" height="4" rx="2" fill="#29242E"/>
+<rect x="1145" y="245" width="318" height="581" rx="0" fill="#D8DED2"/>
+<text x="1170" y="301" fill="#5C6B54" font-family="serif" font-size="33" font-weight="400">Your day.</text>
+<text x="1170" y="328" fill="#6E7A66" font-family="sans-serif" font-size="12" font-weight="400">A moment for what matters.</text>
+<rect x="1167" y="357" width="274" height="103" rx="22" fill="#E9EDDF"/>
+<rect x="1167" y="475" width="130" height="70" rx="18" fill="#B4C4B2"/>
+<rect x="1310" y="475" width="131" height="70" rx="18" fill="#C5B6CD"/>
+<rect x="1145" y="244" width="318" height="588" rx="0" fill="#29242E" fill-opacity=".24"/>
+<rect x="1155" y="507" width="298" height="336" rx="27" fill="#F8F6F1"/>
+<rect x="1282" y="517" width="44" height="3" rx="2" fill="#D6CCD9"/>
+<path d="M 1182 537 Q 1183.8 544.2 1191 546 Q 1183.8 547.8 1182 555 Q 1180.2 547.8 1173 546 Q 1180.2 544.2 1182 537Z" fill="#7554A4"/>
+<text x="1198" y="553" fill="#29242E" font-family="sans-serif" font-size="21" font-weight="600">lfm</text>
+<text x="1376" y="552" fill="#7C6B87" font-family="sans-serif" font-size="20" font-weight="400">↗</text>
+<text x="1416" y="552" fill="#7C6B87" font-family="sans-serif" font-size="24" font-weight="400">×</text>
+<text x="1174" y="598" fill="#29242E" font-family="serif" font-size="28" font-weight="400">I’m listening.</text>
+<text x="1174" y="626" fill="#807587" font-family="sans-serif" font-size="12" font-weight="400">Go on. What’s on your mind?</text>
+<rect x="1234" y="681.0" width="5" height="12" rx="3" fill="#9574BD"/>
+<rect x="1249" y="675.0" width="5" height="24" rx="3" fill="#9574BD"/>
+<rect x="1264" y="665.5" width="5" height="43" rx="3" fill="#9574BD"/>
+<rect x="1279" y="674.5" width="5" height="25" rx="3" fill="#9574BD"/>
+<rect x="1294" y="657.5" width="5" height="59" rx="3" fill="#9574BD"/>
+<rect x="1309" y="670.0" width="5" height="34" rx="3" fill="#9574BD"/>
+<rect x="1324" y="663.5" width="5" height="47" rx="3" fill="#9574BD"/>
+<rect x="1339" y="676.5" width="5" height="21" rx="3" fill="#9574BD"/>
+<rect x="1354" y="681.0" width="5" height="12" rx="3" fill="#9574BD"/>
+<rect x="1244" y="736" width="119" height="36" rx="18" fill="#29242E"/>
+<text x="1257" y="759" fill="#FFFFFF" font-family="sans-serif" font-size="12" font-weight="500">Done speaking</text>
+<text x="1226" y="805" fill="#807587" font-family="sans-serif" font-size="11" font-weight="400">Your mic is on · Cancel</text>
+<text x="1504" y="173" fill="#514A56" font-family="sans-serif" font-size="15" font-weight="600">05 / RESPONSE</text>
+<rect x="1504" y="195" width="328" height="668" rx="34" fill="#29242E"/>
+<rect x="1509" y="200" width="318" height="658" rx="30" fill="#F8F6F1"/>
+<text x="1527" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="600">9:41</text>
+<text x="1763" y="231" fill="#29242E" font-family="sans-serif" font-size="11" font-weight="400">•••</text>
+<rect x="1633" y="844" width="70" height="4" rx="2" fill="#29242E"/>
+<rect x="1509" y="245" width="318" height="581" rx="0" fill="#D8DED2"/>
+<text x="1534" y="301" fill="#5C6B54" font-family="serif" font-size="33" font-weight="400">Your day.</text>
+<text x="1534" y="328" fill="#6E7A66" font-family="sans-serif" font-size="12" font-weight="400">A moment for what matters.</text>
+<rect x="1531" y="357" width="274" height="103" rx="22" fill="#E9EDDF"/>
+<rect x="1531" y="475" width="130" height="70" rx="18" fill="#B4C4B2"/>
+<rect x="1674" y="475" width="131" height="70" rx="18" fill="#C5B6CD"/>
+<rect x="1509" y="244" width="318" height="588" rx="0" fill="#29242E" fill-opacity=".24"/>
+<rect x="1519" y="453" width="298" height="390" rx="27" fill="#F8F6F1"/>
+<rect x="1646" y="463" width="44" height="3" rx="2" fill="#D6CCD9"/>
+<path d="M 1546 483 Q 1547.8 490.2 1555 492 Q 1547.8 493.8 1546 501 Q 1544.2 493.8 1537 492 Q 1544.2 490.2 1546 483Z" fill="#7554A4"/>
+<text x="1562" y="499" fill="#29242E" font-family="sans-serif" font-size="21" font-weight="600">lfm</text>
+<text x="1740" y="498" fill="#7C6B87" font-family="sans-serif" font-size="20" font-weight="400">↗</text>
+<text x="1780" y="498" fill="#7C6B87" font-family="sans-serif" font-size="24" font-weight="400">×</text>
+<text x="1538" y="537" fill="#807587" font-family="sans-serif" font-size="12" font-weight="400">A small way to reset my day?</text>
+<text x="1538" y="576" fill="#29242E" font-family="serif" font-size="21" font-weight="400">Try a five-minute reset.</text>
+<text x="1538" y="611" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">Step away from your screen, get</text>
+<text x="1538" y="633" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">some water, and choose just one</text>
+<text x="1538" y="655" fill="#645C68" font-family="sans-serif" font-size="13" font-weight="400">small thing to do next.</text>
+<rect x="1536" y="683" width="69" height="36" rx="18" fill="#ECE8E2"/>
+<text x="1549" y="706" fill="#645C68" font-family="sans-serif" font-size="12" font-weight="500">Copy</text>
+<rect x="1612" y="683" width="112" height="36" rx="18" fill="#ECE8E2"/>
+<text x="1625" y="706" fill="#645C68" font-family="sans-serif" font-size="12" font-weight="500">Read aloud</text>
+<rect x="1530" y="755" width="276" height="58" rx="29" fill="#FFFFFF" stroke="#E4DFE8"/>
+<text x="1548" y="790" fill="#89808C" font-family="sans-serif" font-size="14" font-weight="400">Ask a follow-up…</text>
+<rect x="1756" y="763" width="42" height="42" rx="21" fill="#29242E"/>
+<g fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"><rect x="1774" y="774" width="6" height="12" rx="3"/><path d="M 1770 782q 0 10 7 10q 7 0 7 -10 M1777 792v4 M1773 796h8"/></g>
+<text x="48" y="913" fill="#776F7C" font-family="sans-serif" font-size="12" font-weight="600">ONE FAMILY, DIFFERENT MOMENTS</text>
+<text x="48" y="946" fill="#29242E" font-family="serif" font-size="19" font-weight="400">The app is a place to return to.</text>
+<text x="48" y="976" fill="#29242E" font-family="serif" font-size="19" font-weight="400">The floating panel is a short, useful interruption.</text>
+<text x="48" y="1005" fill="#29242E" font-family="serif" font-size="19" font-weight="400">The widget is the quickest way in.</text>
+<text x="48" y="1050" fill="#776F7C" font-family="sans-serif" font-size="12" font-weight="400">Concept only. Includes planned features such as Read aloud. No app changes applied in this planning pass.</text>
+<rect x="828" y="903" width="430" height="166" rx="25" fill="#F8F6F1"/>
+<path d="M 854 922 Q 855.8 929.2 863 931 Q 855.8 932.8 854 940 Q 852.2 932.8 845 931 Q 852.2 929.2 854 922Z" fill="#7554A4"/>
+<text x="873" y="939" fill="#29242E" font-family="sans-serif" font-size="21" font-weight="600">lfm</text>
+<rect x="1159" y="916" width="77" height="36" rx="18" fill="#E5EADD"/>
+<text x="1172" y="939" fill="#526143" font-family="sans-serif" font-size="12" font-weight="500">• Ready</text>
+<text x="850" y="980" fill="#29242E" font-family="serif" font-size="26" font-weight="400">A little help, right here.</text>
+<rect x="848" y="1000" width="225" height="49" rx="24" fill="#29242E"/>
+<text x="908" y="1030" fill="#FFFFFF" font-family="sans-serif" font-size="14" font-weight="400">Ask anything</text>
+<rect x="1084" y="1000" width="153" height="49" rx="24" fill="#EAE1F1"/>
+<text x="1143" y="1030" fill="#64428D" font-family="sans-serif" font-size="14" font-weight="400">Speak</text>
+<g fill="none" stroke="#64428D" stroke-width="1.8" stroke-linecap="round"><rect x="1111" y="1013" width="6" height="12" rx="3"/><path d="M 1107 1021q 0 10 7 10q 7 0 7 -10 M1114 1031v4 M1110 1035h8"/></g>
+<text x="1300" y="936" fill="#29242E" font-family="sans-serif" font-size="18" font-weight="500">Calm, clear states</text>
+<text x="1300" y="968" fill="#776F7C" font-family="sans-serif" font-size="13" font-weight="400">Ready → Listening → Thinking → Answering</text>
+<text x="1300" y="997" fill="#776F7C" font-family="sans-serif" font-size="13" font-weight="400">Mic → Send → Stop; never competing actions.</text>
+<text x="1300" y="1026" fill="#776F7C" font-family="sans-serif" font-size="13" font-weight="400">Compact first. Expand when you want more.</text>
+</svg>
