@@ -92,16 +92,16 @@ class EdgeAIWidgetProvider : AppWidgetProvider() {
                     val currentlyReady = AssistantClient.isReady()
                     if (currentlyReady) {
                         // User requested stop
-                        AssistantClient.stopEngine()
+                        AssistantClient.stopEngine(appContext)
                         Thread.sleep(800)
                         render(appContext, ready = false, transitioning = false)
                     } else {
                         // User requested start
                         render(appContext, ready = false, transitioning = true)
-                        AssistantClient.startEngine()
-                        // Poll until ready or max 10 seconds
+                        AssistantClient.startEngine(appContext)
+                        // Poll until ready or max 12 seconds
                         var ready = false
-                        for (i in 0 until 6) {
+                        for (i in 0 until 8) {
                             Thread.sleep(1500)
                             if (AssistantClient.isReady()) {
                                 ready = true

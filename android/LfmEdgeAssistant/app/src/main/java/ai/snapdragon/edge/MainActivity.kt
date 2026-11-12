@@ -64,6 +64,9 @@ class MainActivity : Activity() {
         window.navigationBarColor = paper
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
         restoreConversation()
+        if (checkSelfPermission("com.termux.permission.RUN_COMMAND") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf("com.termux.permission.RUN_COMMAND"), 1001)
+        }
         route(intent)
     }
 
@@ -307,7 +310,7 @@ class MainActivity : Activity() {
             // Stop Engine
             Toast.makeText(this, "Pausing LFM Engine…", Toast.LENGTH_SHORT).show()
             executor.execute {
-                AssistantClient.stopEngine()
+                AssistantClient.stopEngine(applicationContext)
                 handler.post {
                     ready = false
                     updateHomeEngineViews()
@@ -319,16 +322,18 @@ class MainActivity : Activity() {
             transitioning = true
             updateHomeEngineViews()
             Toast.makeText(this, "Starting LFM Engine on Snapdragon GPU…", Toast.LENGTH_SHORT).show()
+            val appContext = applicationContext
             executor.execute {
-                AssistantClient.startEngine()
+                AssistantClient.startEngine(appContext)
                 var isUp = false
-                for (i in 0 until 8) {
-                    Thread.sleep(1500)
+                for (i in 0 until 10) {
+                    Thread.sleep(1200)
                     if (AssistantClient.isReady()) {
                         isUp = true
                         break
                     }
                 }
+                val controllerAlive = if (!isUp) AssistantClient.isControllerAlive() else true
                 handler.post {
                     transitioning = false
                     ready = isUp
@@ -336,8 +341,18 @@ class MainActivity : Activity() {
                     EdgeAIWidgetProvider.updateAllWidgets(this)
                     if (isUp) {
                         Toast.makeText(this@MainActivity, "LFM Engine is ready!", Toast.LENGTH_SHORT).show()
+                    } else if (!controllerAlive) {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Start LFM Supervisor")
+                            .setMessage("The local daemon supervisor is resting. Would you like to open Termux once to wake the background services?")
+                            .setPositiveButton("Open Termux") { _, _ ->
+                                val launchIntent = packageManager.getLaunchIntentForPackage("com.termux")
+                                if (launchIntent != null) startActivity(launchIntent)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
                     } else {
-                        Toast.makeText(this@MainActivity, "Still starting. Please wait a moment.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Model is loading into GPU. Please wait a moment.", Toast.LENGTH_LONG).show()
                     }
                 }
             }

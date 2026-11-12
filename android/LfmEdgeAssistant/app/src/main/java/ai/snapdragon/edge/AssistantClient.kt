@@ -1,5 +1,7 @@
 package ai.snapdragon.edge
 
+import android.content.Context
+import android.content.Intent
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -10,6 +12,7 @@ import java.net.URL
  * All inference and control occurs 100% on-device over localhost:
  * - llama-server on port 8080 (LFM3-VL-2B on Adreno 840 GPU)
  * - controller daemon on port 8082 (instant stack supervisor)
+ * - Termux RunCommand fallback for headless script execution
  */
 object AssistantClient {
     private const val LLAMA_BASE = "http://127.0.0.1:8080"
@@ -41,30 +44,62 @@ object AssistantClient {
         }
     }
 
-    fun startEngine(): Boolean {
-        return try {
+    fun startEngine(context: Context? = null): Boolean {
+        // Attempt 1: Fast direct HTTP controller
+        try {
             val connection = URL("$CONTROLLER_BASE/start").openConnection() as HttpURLConnection
-            connection.connectTimeout = 3000
-            connection.readTimeout = 3000
+            connection.connectTimeout = 2500
+            connection.readTimeout = 2500
             val code = connection.responseCode
             connection.disconnect()
-            code == 200
-        } catch (_: Exception) {
-            false
+            if (code == 200) return true
+        } catch (_: Exception) {}
+
+        // Attempt 2: Termux RunCommand Intent fallback
+        if (context != null) {
+            try {
+                val intent = Intent().apply {
+                    setClassName("com.termux", "com.termux.app.RunCommandService")
+                    action = "com.termux.RUN_COMMAND"
+                    putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/sh")
+                    putExtra("com.termux.RUN_COMMAND_ARGUMENTS", arrayOf("/sdcard/Download/start_all.sh"))
+                    putExtra("com.termux.RUN_COMMAND_WORKDIR", "/sdcard/Download")
+                    putExtra("com.termux.RUN_COMMAND_BACKGROUND", true)
+                }
+                context.startService(intent)
+                return true
+            } catch (_: Exception) {}
         }
+        return false
     }
 
-    fun stopEngine(): Boolean {
-        return try {
+    fun stopEngine(context: Context? = null): Boolean {
+        // Attempt 1: Fast direct HTTP controller
+        try {
             val connection = URL("$CONTROLLER_BASE/stop").openConnection() as HttpURLConnection
-            connection.connectTimeout = 3000
-            connection.readTimeout = 3000
+            connection.connectTimeout = 2500
+            connection.readTimeout = 2500
             val code = connection.responseCode
             connection.disconnect()
-            code == 200
-        } catch (_: Exception) {
-            false
+            if (code == 200) return true
+        } catch (_: Exception) {}
+
+        // Attempt 2: Termux RunCommand Intent fallback
+        if (context != null) {
+            try {
+                val intent = Intent().apply {
+                    setClassName("com.termux", "com.termux.app.RunCommandService")
+                    action = "com.termux.RUN_COMMAND"
+                    putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/sh")
+                    putExtra("com.termux.RUN_COMMAND_ARGUMENTS", arrayOf("/sdcard/Download/stop_all.sh"))
+                    putExtra("com.termux.RUN_COMMAND_WORKDIR", "/sdcard/Download")
+                    putExtra("com.termux.RUN_COMMAND_BACKGROUND", true)
+                }
+                context.startService(intent)
+                return true
+            } catch (_: Exception) {}
         }
+        return false
     }
 
     fun reply(history: List<Pair<String, String>>): String {
