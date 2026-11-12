@@ -18,6 +18,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import ai.snapdragon.edge.service.VoiceWakeService
 import ai.snapdragon.edge.widget.EdgeAIWidgetProvider
 import org.json.JSONArray
 import org.json.JSONObject
@@ -43,6 +44,9 @@ class MainActivity : Activity() {
     private var engineCardTitle: TextView? = null
     private var engineCardSubtitle: TextView? = null
     private var engineCardAction: TextView? = null
+
+    private var voiceWakeCardAction: TextView? = null
+    private var voiceWakeCardSubtitle: TextView? = null
 
     private var transcript: LinearLayout? = null
     private var chatScroll: ScrollView? = null
@@ -80,6 +84,7 @@ class MainActivity : Activity() {
         super.onResume()
         handler.removeCallbacks(poll)
         handler.post(poll)
+        updateVoiceWakeViews()
     }
 
     override fun onPause() {
@@ -139,23 +144,24 @@ class MainActivity : Activity() {
 
     private fun button(label: String, dark: Boolean = true, action: () -> Unit): TextView = text(label, 15f, if (dark) Color.WHITE else ink, "sans-serif-medium").apply {
         gravity = Gravity.CENTER
-        setPadding(dp(14), dp(11), dp(14), dp(11))
-        clickable(this, if (dark) ink else Color.parseColor("#EEEAE3"), 28, action)
+        val radius = 24
+        val fill = if (dark) ink else Color.WHITE
+        background = RippleDrawable(ColorStateList.valueOf(if (dark) 0x33FFFFFF else 0x186B50A1), bg(fill, radius, if (dark) null else Color.parseColor("#E6E0E8")), null)
+        isClickable = true
+        isFocusable = true
+        setOnClickListener { action() }
     }
 
     private fun showHome() {
-        currentFocus?.windowToken?.let { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it, 0) }
         chatting = false
-        transcript = null
-        input = null
-        sendButton = null
-
         val scroll = ScrollView(this).apply {
             setBackgroundColor(paper)
             isFillViewport = true
-            clipToPadding = false
         }
-        val page = column().apply { setPadding(dp(24), dp(14), dp(24), dp(20)) }
+
+        val page = column().apply {
+            setPadding(dp(22), dp(16), dp(22), dp(24))
+        }
         scroll.addView(page)
 
         // Top Header
@@ -207,10 +213,32 @@ class MainActivity : Activity() {
         engineCard.addView(engineRow)
         page.add(engineCard, -1, -2, top = 18)
 
+        // Voice Wake Card
+        val voiceWakeCard = column().apply {
+            background = bg(cardBg, 22, Color.parseColor("#E6DFD5"))
+            setPadding(dp(18), dp(14), dp(18), dp(14))
+        }
+        val voiceRow = row()
+        val voiceTextCol = column()
+        val voiceTitle = text("Voice Wake • \"Hey LFM\"", 14.5f, ink, "sans-serif-medium")
+        voiceWakeCardSubtitle = text(if (VoiceWakeService.isServiceRunning) "Listening for 'Hey LFM'" else "Say 'Hey LFM' to open assistant", 11.5f, muted)
+        voiceTextCol.add(voiceTitle)
+        voiceTextCol.add(voiceWakeCardSubtitle!!, top = 3)
+        voiceRow.add(voiceTextCol, 0, -2, weight = 1f)
+
+        voiceWakeCardAction = text(if (VoiceWakeService.isServiceRunning) "● Active" else "Enable", 13f, if (VoiceWakeService.isServiceRunning) emerald else Color.WHITE, "sans-serif-medium").apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(14), dp(8), dp(14), dp(8))
+            clickable(this, if (VoiceWakeService.isServiceRunning) Color.parseColor("#E4EFE3") else plum, 18) { toggleVoiceWake() }
+        }
+        voiceRow.add(voiceWakeCardAction!!, -2, -2)
+        voiceWakeCard.addView(voiceRow)
+        page.add(voiceWakeCard, -1, -2, top = 10)
+
         // Programmatic Radial Flower Artwork
         page.add(MuseArtView(this).apply {
             contentDescription = "LFM intelligence art"
-        }, -1, 180, 18)
+        }, -1, 180, 16)
 
         // Ask Button
         val ask = row().apply {
@@ -220,7 +248,25 @@ class MainActivity : Activity() {
         }
         ask.add(text("Ask anything", 16f, Color.WHITE, "sans-serif-medium"), 0, -2, weight = 1f)
         ask.add(text("↗", 26f, Color.parseColor("#E0CFF5")), -2)
-        page.add(ask, -1, 56, 16)
+        page.add(ask, -1, 56, 14)
+
+        // Floating Assistant Launcher Pill (Gemini style)
+        val floatingPill = row().apply {
+            setPadding(dp(18), dp(12), dp(18), dp(12))
+            clickable(this, Color.parseColor("#EEE8F5"), 24) {
+                startActivity(Intent(this@MainActivity, FloatingAssistantActivity::class.java))
+            }
+            contentDescription = "Open Floating Assistant"
+        }
+        val sparkSmall = ImageView(this).apply {
+            setImageResource(R.drawable.ic_spark)
+            setColorFilter(plum)
+        }
+        floatingPill.add(sparkSmall, 16, 16)
+        val floatingLabel = text("  Open Floating Assistant (Gemini style)", 13.5f, plum, "sans-serif-medium")
+        floatingPill.add(floatingLabel, 0, -2, weight = 1f)
+        floatingPill.add(text("✦", 16f, plum), -2)
+        page.add(floatingPill, -1, -2, top = 10)
 
         // Inspiration Section
         val section = row()
@@ -290,6 +336,39 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun updateVoiceWakeViews() {
+        val running = VoiceWakeService.isServiceRunning
+        voiceWakeCardAction?.text = if (running) "● Active" else "Enable"
+        voiceWakeCardAction?.setTextColor(if (running) emerald else Color.WHITE)
+        val btnBg = if (running) Color.parseColor("#E4EFE3") else plum
+        clickable(voiceWakeCardAction ?: return, btnBg, 18) { toggleVoiceWake() }
+        voiceWakeCardSubtitle?.text = if (running) "Listening for 'Hey LFM' anywhere" else "Say 'Hey LFM' to open floating assistant"
+    }
+
+    private fun toggleVoiceWake() {
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 3003)
+            return
+        }
+        if (VoiceWakeService.isServiceRunning) {
+            VoiceWakeService.stop(this)
+            Toast.makeText(this, "Voice Wake turned off", Toast.LENGTH_SHORT).show()
+        } else {
+            VoiceWakeService.start(this)
+            Toast.makeText(this, "Voice Wake active! Say 'Hey LFM'", Toast.LENGTH_SHORT).show()
+        }
+        handler.postDelayed({ updateVoiceWakeViews() }, 200)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 3003 && grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            VoiceWakeService.start(this)
+            updateVoiceWakeViews()
+            Toast.makeText(this, "Voice Wake active! Say 'Hey LFM'", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun updateHomeEngineViews() {
         statusPill?.text = statusPillText()
         statusPill?.setTextColor(if (ready) emerald else plum)
@@ -302,6 +381,7 @@ class MainActivity : Activity() {
         engineCardAction?.setTextColor(if (ready) ink else Color.WHITE)
         val btnColor = if (ready) Color.parseColor("#E2DDD5") else plum
         clickable(engineCardAction ?: return, btnColor, 20) { toggleEngine() }
+        updateVoiceWakeViews()
     }
 
     private fun toggleEngine() {
@@ -537,6 +617,23 @@ class MainActivity : Activity() {
         transcript?.add(box, top = 12)
     }
 
+    private fun appendAssistantMessage(): TextView {
+        val box = column().apply {
+            setPadding(dp(17), dp(16), dp(17), dp(18))
+            background = bg(Color.WHITE, 22)
+        }
+        box.add(text("LFM", 9.5f, muted, "sans-serif-medium").apply {
+            letterSpacing = 0.13f
+        })
+        val contentTextView = text("", 15.5f).apply {
+            setLineSpacing(dp(4).toFloat(), 1f)
+            setTextIsSelectable(true)
+        }
+        box.add(contentTextView, top = 9)
+        transcript?.add(box, top = 12)
+        return contentTextView
+    }
+
     private fun appendThinking() {
         transcript?.add(text("LFM is thinking…", 14f, plum).apply {
             tag = "thinking"
@@ -577,7 +674,22 @@ class MainActivity : Activity() {
 
         val requestHistory = history.toList()
         executor.execute {
-            val result = runCatching { AssistantClient.reply(requestHistory) }
+            var targetView: TextView? = null
+            val fullText = StringBuilder()
+            val result = runCatching {
+                AssistantClient.streamReply(requestHistory) { token ->
+                    handler.post {
+                        if (isDestroyed) return@post
+                        if (targetView == null && chatting) {
+                            transcript?.findViewWithTag<View>("thinking")?.let { transcript?.removeView(it) }
+                            targetView = appendAssistantMessage()
+                        }
+                        fullText.append(token)
+                        targetView?.text = fullText.toString()
+                        scrollToEnd()
+                    }
+                }
+            }
             handler.post {
                 if (isDestroyed) return@post
                 sending = false
@@ -589,7 +701,6 @@ class MainActivity : Activity() {
                     history.add("assistant" to answer)
                     persistConversation()
                     getSharedPreferences("lfm_prefs", MODE_PRIVATE).edit().remove("draft").apply()
-                    if (chatting) appendMessage("assistant", answer)
                     ready = true
                     statusPill?.text = "• Active"
                 }.onFailure {
@@ -624,7 +735,6 @@ class MainActivity : Activity() {
 
     private fun restoreConversation() {
         val prefs = getSharedPreferences("lfm_prefs", MODE_PRIVATE)
-        // Check for migration from previous "muse" store if present
         val oldPrefs = getSharedPreferences("muse", MODE_PRIVATE)
         if (!prefs.contains("conversation") && oldPrefs.contains("conversation")) {
             val oldConv = oldPrefs.getString("conversation", "[]")

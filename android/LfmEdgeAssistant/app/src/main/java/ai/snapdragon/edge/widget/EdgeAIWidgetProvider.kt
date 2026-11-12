@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.widget.RemoteViews
 import ai.snapdragon.edge.AssistantClient
+import ai.snapdragon.edge.FloatingAssistantActivity
 import ai.snapdragon.edge.MainActivity
 import ai.snapdragon.edge.R
 import java.util.concurrent.Executors
@@ -54,10 +55,19 @@ class EdgeAIWidgetProvider : AppWidgetProvider() {
                     }
                 }
 
-                fun open(request: Int, destination: String): PendingIntent {
+                fun openApp(request: Int, destination: String): PendingIntent {
                     val intent = Intent(context, MainActivity::class.java).apply {
                         action = "ai.snapdragon.edge.OPEN_$destination"
                         putExtra("destination", destination)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    return PendingIntent.getActivity(context, request, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                }
+
+                fun openFloating(request: Int, autoListen: Boolean): PendingIntent {
+                    val intent = Intent(context, FloatingAssistantActivity::class.java).apply {
+                        action = "ai.snapdragon.edge.OPEN_FLOATING"
+                        putExtra("auto_listen", autoListen)
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                     }
                     return PendingIntent.getActivity(context, request, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -73,9 +83,9 @@ class EdgeAIWidgetProvider : AppWidgetProvider() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
 
-                views.setOnClickPendingIntent(R.id.widget_root, open(100, "home"))
-                views.setOnClickPendingIntent(R.id.btn_speak, open(101, "chat"))
-                views.setOnClickPendingIntent(R.id.btn_ideas, open(102, "ideas"))
+                views.setOnClickPendingIntent(R.id.widget_root, openApp(100, "home"))
+                views.setOnClickPendingIntent(R.id.btn_speak, openFloating(101, true))
+                views.setOnClickPendingIntent(R.id.btn_ideas, openFloating(102, false))
                 views.setOnClickPendingIntent(R.id.btn_widget_power, togglePi)
 
                 manager.updateAppWidget(id, views)
