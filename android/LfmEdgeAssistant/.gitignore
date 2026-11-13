@@ -11,7 +11,10 @@ research/keyword-spotting/wake-assets/
 research/keyword-spotting/jniLibs/
 
 # Device captures may contain personal chats, wallpaper, or notifications.
-design/floating-before.png
+design/*.png
+design/*.jpg
+design/*.jpeg
+design/*.webp
 
 # Reproducibly fetched by scripts/prepare_speech.py
 app/src/main/assets/speech/

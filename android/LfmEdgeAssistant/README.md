@@ -76,6 +76,6 @@ Before the device update, controller scripts were backed up under `/sdcard/Downl
 - Runtime ownership/reboot recovery, cooperative server termination, default loopback inference with explicit LAN sharing, stronger IPC/authentication, and staged SDK/toolchain/release-signing migration.
 - Explicit user-initiated screen context, speaker verification/enrollment, custom wake phrases, and multilingual speech models. These are not shipped capabilities.
 
-See `design/next/DESIGN_AND_IMPLEMENTATION_PLAN.md` for the original audit and targets. It predates implementation and branding; this README and `design/CUE_VALIDATION.md` describe what was actually delivered and tested.
+See [Cue validation](design/CUE_VALIDATION.md) for delivered behavior and test results, and the [Android reliability review](design/ANDROID_RELIABILITY_REVIEW.md) for the implementation and build review.
 
 See `design/VOICE_NEXT_STEPS.md` for the audio/omni evaluation plan and current limits.
