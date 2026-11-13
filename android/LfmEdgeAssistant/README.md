@@ -82,3 +82,5 @@ Before the device update, controller scripts were backed up under `/sdcard/Downl
 See [Cue validation](design/CUE_VALIDATION.md) for delivered behavior and test results, and the [Android reliability review](design/ANDROID_RELIABILITY_REVIEW.md) for the implementation and build review.
 
 See `design/VOICE_NEXT_STEPS.md` for the audio/omni evaluation plan and current limits.
+
+See [on-phone assistant architecture](research/assistant-architecture/README.md) for the 25-repository source review and the proposed search, native actions, phone browser, MCP, memory and optional larger-model delegation plan. These are researched next steps, not features shipped in Cue 3.3.2.

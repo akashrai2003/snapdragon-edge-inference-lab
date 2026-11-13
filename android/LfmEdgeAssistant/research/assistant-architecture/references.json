@@ -1,0 +1,644 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-11-14",
+  "checkout_root_hint": "../cue-assistant-references (sibling of the project repository)",
+  "scope": "Targeted code-path review, not a full security audit or executed upstream-stack evaluation. No dependencies, models, provider credentials or runtimes were installed.",
+  "repositories": [
+    {
+      "repository": "OpenVoiceOS/ovos-core",
+      "requested_as": "OpenVoiceOS/ovos-core",
+      "clone_url": "https://github.com/OpenVoiceOS/ovos-core.git",
+      "default_branch_at_review": "dev",
+      "revision": "ff2012175ba5be072daa4eb9acaf38b4f7ecbd03",
+      "commit_date": "2026-11-02T17:48:34+00:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "ovos_core",
+        "test"
+      ],
+      "reviewed_paths": [
+        "ovos_core/intent_services/dispatcher.py",
+        "ovos_core/intent_services/working_session.py"
+      ],
+      "decision": "reference",
+      "lesson": "Intent dispatch owns one start and one terminal event, with timeout and session-scoped state. Reuse that lifecycle pattern in Cue; the Python/message-bus stack is not an Android replacement."
+    },
+    {
+      "repository": "home-assistant/core",
+      "requested_as": "home-assistant/core",
+      "clone_url": "https://github.com/home-assistant/core.git",
+      "default_branch_at_review": "dev",
+      "revision": "08920ecb3ae1d96049f3ca03b7e14601c33aadb4",
+      "commit_date": "2026-11-13T12:03:22-06:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "sparse_paths": [
+        "homeassistant/components/assist_pipeline",
+        "homeassistant/components/conversation",
+        "homeassistant/components/intent",
+        "homeassistant/components/mcp",
+        "homeassistant/components/mcp_server",
+        "homeassistant/components/openai_conversation",
+        "homeassistant/helpers",
+        "tests/components/conversation"
+      ],
+      "reviewed_paths": [
+        "homeassistant/helpers/llm.py",
+        "homeassistant/components/mcp_server/server.py"
+      ],
+      "decision": "optional integration",
+      "lesson": "Tool schemas, explicit results, user context, and filtered MCP exposure are separated from the language model. Integrate a user-owned Home Assistant later; do not require its server for ordinary phone actions."
+    },
+    {
+      "repository": "leon-ai/leon",
+      "requested_as": "leon-ai/leon",
+      "clone_url": "https://github.com/leon-ai/leon.git",
+      "default_branch_at_review": "develop",
+      "revision": "3b56d83126ccf38a72f70282e91515cc3a18a3de",
+      "commit_date": "2026-11-13T21:53:26+08:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "sparse_paths": [
+        "bridges",
+        "server",
+        "skills"
+      ],
+      "reviewed_paths": [
+        "server/src/core/tool-manager/tool-execution-manager.ts",
+        "bridges/runtime/contracts/skill-tool-protocol.ts",
+        "skills/native/timer_skill/skill.json"
+      ],
+      "decision": "reference",
+      "lesson": "Execution handles retain progress, cancellation and results without reissuing a tool, and check profile/session ownership. Skill manifests describe functions. Adapt those contracts to Kotlin rather than bundling its server."
+    },
+    {
+      "repository": "rhasspy/rhasspy",
+      "requested_as": "rhasspy/rhasspy",
+      "clone_url": "https://github.com/rhasspy/rhasspy.git",
+      "default_branch_at_review": "master",
+      "revision": "083721a92a9a12396c794003a7f9ebcdd8dffa60",
+      "commit_date": "2025-04-22T10:08:14-05:00",
+      "archived_at_review": true,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "etc",
+        "rhasspy"
+      ],
+      "reviewed_paths": [
+        "rhasspy/__main__.py",
+        "README.md"
+      ],
+      "decision": "historical reference",
+      "lesson": "The archived service launcher dispatches independent speech, dialogue and intent modules; README shows deterministic slot grammars. Useful for fast local commands, not the basis for a new general browser agent. Submodule implementations were not recursively cloned."
+    },
+    {
+      "repository": "openclaw/openclaw",
+      "requested_as": "openclaw/openclaw",
+      "clone_url": "https://github.com/openclaw/openclaw.git",
+      "default_branch_at_review": "main",
+      "revision": "eae12351406e4cfee0b800e5f2006ae24e0e1578",
+      "commit_date": "2026-11-13T13:03:16-06:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "apps/android",
+        "docs/gateway",
+        "docs/nodes",
+        "docs/tools",
+        "src/agents",
+        "src/gateway",
+        "src/infra",
+        "src/plugin-sdk"
+      ],
+      "reviewed_paths": [
+        "apps/android/app/src/main/java/ai/openclaw/app/node/InvokeDispatcher.kt",
+        "apps/android/app/src/thirdParty/java/ai/openclaw/app/node/MobileUiHandler.kt",
+        "apps/android/app/src/play/java/ai/openclaw/app/node/MobileUiHandler.kt",
+        "docs/tools/mcp.md",
+        "docs/tools/web-fetch.md"
+      ],
+      "decision": "selective reuse candidate",
+      "lesson": "Strongest Android action reference: one advertised/dispatch table, live permission gates, foreground restrictions and snapshot-bound UI actions. Play and third-party mobile-control implementations differ. Keep Cue as the on-phone orchestrator instead of making its brain depend on the gateway."
+    },
+    {
+      "repository": "khoj-ai/khoj",
+      "requested_as": "khoj-ai/khoj",
+      "clone_url": "https://github.com/khoj-ai/khoj.git",
+      "default_branch_at_review": "master",
+      "revision": "ae229ca894c0b80ad84664afcfdde523b5e87057",
+      "commit_date": "2026-08-01T18:55:40-07:00",
+      "archived_at_review": false,
+      "license_summary": "AGPL-3.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "documentation",
+        "src/khoj",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "src/khoj/processor/tools/online_search.py",
+        "src/khoj/processor/tools/mcp.py",
+        "src/khoj/processor/operator/operator_environment_browser.py"
+      ],
+      "decision": "reference / optional service",
+      "lesson": "Separates search, page reading, MCP and browser observation/actions. Its Playwright environment is a Python/browser runtime, not a mobile WebView component. Useful evidence/citation and research patterns; no server dependency for Cue."
+    },
+    {
+      "repository": "letta-ai/letta",
+      "requested_as": "letta-ai/letta",
+      "clone_url": "https://github.com/letta-ai/letta.git",
+      "default_branch_at_review": "main",
+      "revision": "8816d3a8516893bfdc0fa14bfb1235226012e295",
+      "commit_date": "2026-10-18T15:28:01-07:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [],
+      "reviewed_paths": [
+        "README.md",
+        "LICENSE"
+      ],
+      "decision": "redirect reference",
+      "lesson": "Current default branch points to letta-code; retired V1 API source is on archive. Followed the active implementation rather than assuming the older Python memory server is still the main product."
+    },
+    {
+      "repository": "OpenHands/OpenHands",
+      "requested_as": "OpenHands/OpenHands",
+      "clone_url": "https://github.com/OpenHands/OpenHands.git",
+      "default_branch_at_review": "main",
+      "revision": "c11557132fcff450f942cd1560315555c8c4c022",
+      "commit_date": "2026-11-13T17:22:50+00:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "src",
+        "tools"
+      ],
+      "reviewed_paths": [
+        "README.md",
+        "src/api/agent-server-adapter.ts"
+      ],
+      "decision": "reference",
+      "lesson": "Current repository is Agent Canvas, a control center and adapter to agent servers. Followed software-agent-sdk for execution internals; the desktop/control-center product is not an Android assistant base."
+    },
+    {
+      "repository": "openinterpreter/openinterpreter",
+      "requested_as": "OpenInterpreter/open-interpreter",
+      "clone_url": "https://github.com/openinterpreter/openinterpreter.git",
+      "default_branch_at_review": "main",
+      "revision": "80d8f55385452457a625dbabc032f3003b9545b4",
+      "commit_date": "2026-11-11T02:57:27+00:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE",
+        "NOTICE"
+      ],
+      "sparse_paths": [
+        "codex-rs/core/src/agent",
+        "codex-rs/core/src/client",
+        "codex-rs/core/src/skills",
+        "codex-rs/core/src/tools",
+        "docs"
+      ],
+      "reviewed_paths": [
+        "README.md",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/core/src/tools/orchestrator.rs"
+      ],
+      "decision": "reference",
+      "lesson": "The old repository URL redirects here. Current implementation is a Rust coding-agent fork with tool registration, cancellation and execution policy. Learn those boundaries; do not assume the old Python computer-control API or expose an unrestricted terminal on the phone."
+    },
+    {
+      "repository": "the-open-agent/openagent",
+      "requested_as": "the-open-agent/openagent",
+      "clone_url": "https://github.com/the-open-agent/openagent.git",
+      "default_branch_at_review": "master",
+      "revision": "f2338321f65ad7dd65d0749ad0bd95efa7c2c881",
+      "commit_date": "2026-11-06T21:17:05+08:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "audio",
+        "authz",
+        "carrier",
+        "chain",
+        "conf",
+        "internal",
+        "mcp",
+        "tool"
+      ],
+      "reviewed_paths": [
+        "mcp/client.go",
+        "mcp/tools.go",
+        "go.mod"
+      ],
+      "decision": "reference",
+      "lesson": "Go MCP clients implement discovery/calls, tokens and bounded requests. Its broader backend has many integrations and storage dependencies. Useful transport examples rather than a Kotlin mobile runtime."
+    },
+    {
+      "repository": "pipecat-ai/pipecat",
+      "requested_as": "pipecat-ai/pipecat",
+      "clone_url": "https://github.com/pipecat-ai/pipecat.git",
+      "default_branch_at_review": "main",
+      "revision": "379f35df81ab809312ff4f57ff2f1296e2eee333",
+      "commit_date": "2026-11-13T13:46:45-05:00",
+      "archived_at_review": false,
+      "license_summary": "BSD-2-Clause",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "src/pipecat",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "src/pipecat/services/llm_service.py",
+        "src/pipecat/frames/frames.py"
+      ],
+      "decision": "voice reference",
+      "lesson": "Typed stream frames and explicit cleanup/cancellation connect voice and tool work. Adapt event and cancellation semantics to the existing quiet Android pipeline; replacing it with a Python media server is not needed for tools."
+    },
+    {
+      "repository": "livekit/agents",
+      "requested_as": "livekit/agents",
+      "clone_url": "https://github.com/livekit/agents.git",
+      "default_branch_at_review": "main",
+      "revision": "3e5156882414f4f5919437c1834a4261bdd9ce2a",
+      "commit_date": "2026-11-13T11:31:56-05:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE",
+        "NOTICE"
+      ],
+      "sparse_paths": [
+        "livekit-agents",
+        "livekit-plugins",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "livekit-agents/livekit/agents/voice/agent_session.py",
+        "livekit-agents/livekit/agents/llm/tool_context.py"
+      ],
+      "decision": "voice reference",
+      "lesson": "Tool results distinguish output from whether speech should follow; session and interruption state are explicit. Useful for spoken tool progress and interruption. WebRTC/room infrastructure is optional, not required for a single-phone assistant."
+    },
+    {
+      "repository": "elyase/awesome-personal-ai-assistants",
+      "requested_as": "elyase/awesome-personal-ai-assistants",
+      "clone_url": "https://github.com/elyase/awesome-personal-ai-assistants.git",
+      "default_branch_at_review": "master",
+      "revision": "e4e8ac390debfae0f28ba7be6083cdce42f0a073",
+      "commit_date": "2026-02-25T01:13:48-05:00",
+      "archived_at_review": false,
+      "license_summary": "CC0-1.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [],
+      "reviewed_paths": [
+        "readme.md",
+        "LICENSE"
+      ],
+      "decision": "directory",
+      "lesson": "A discovery list rather than an implementation. Cloned this linked directory; did not recursively clone every project mentioned in it. Feature and memory claims in the list are not phone benchmarks."
+    },
+    {
+      "repository": "searxng/searxng",
+      "requested_as": "searxng/searxng",
+      "clone_url": "https://github.com/searxng/searxng.git",
+      "default_branch_at_review": "master",
+      "revision": "219b63b207c98b85471de5abab773e76432f1961",
+      "commit_date": "2026-11-13T14:10:30+01:00",
+      "archived_at_review": false,
+      "license_summary": "AGPL-3.0-or-later",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "searx",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "searx/search/processors/online.py",
+        "searx/exceptions.py",
+        "docs/dev/search_api.rst"
+      ],
+      "decision": "optional search backend",
+      "lesson": "Search adapters have timeouts, denied-access and suspension handling. JSON output requires instance configuration. Good optional endpoint or adapter inspiration; public instances and upstream engines cannot promise unlimited availability."
+    },
+    {
+      "repository": "browser-use/browser-use",
+      "requested_as": "browser-use/browser-use",
+      "clone_url": "https://github.com/browser-use/browser-use.git",
+      "default_branch_at_review": "main",
+      "revision": "48d9fe008bb98a8959279b495518652dfb934d6b",
+      "commit_date": "2026-11-13T12:07:33+05:30",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "browser_use",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "browser_use/agent/service.py",
+        "browser_use/browser/browser.py"
+      ],
+      "decision": "browser reference",
+      "lesson": "Current agent bounds runs by steps/time, owns browser sessions and distinguishes local/cloud runtimes. Adapt observation/action/result budgeting to a phone browser. Do not run its desktop Python/browser/REPL stack as a required phone service."
+    },
+    {
+      "repository": "microsoft/playwright-mcp",
+      "requested_as": "microsoft/playwright-mcp",
+      "clone_url": "https://github.com/microsoft/playwright-mcp.git",
+      "default_branch_at_review": "main",
+      "revision": "78eca85361efb545a4c0f59b6140aef0721c5412",
+      "commit_date": "2026-11-11T10:08:38-08:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "src",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "README.md",
+        "src/README.md",
+        "package.json"
+      ],
+      "decision": "tool-contract reference",
+      "lesson": "Package documents structured snapshots and tools; implementation lives in the Playwright monorepo. Followed that source. A mobile-emulation option is not an Android-native runtime and does not remove the need for a browser host."
+    },
+    {
+      "repository": "droidrun/mobilerun",
+      "requested_as": "droidrun/droidrun",
+      "clone_url": "https://github.com/droidrun/mobilerun.git",
+      "default_branch_at_review": "main",
+      "revision": "e34004270a9d7b68824b94a3a5ba6698cefea69d",
+      "commit_date": "2026-11-04T22:05:59+01:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "mobilerun"
+      ],
+      "reviewed_paths": [
+        "mobilerun/agent/droid/droid_agent.py",
+        "mobilerun/agent/utils/android_device.py"
+      ],
+      "decision": "mobile-agent reference",
+      "lesson": "Renamed from DroidRun. Manager/executor and UI-state providers are separate; Android drivers support both ADB and authenticated Portal HTTP. Useful control-loop patterns; current Python harness is not a drop-in Cue brain."
+    },
+    {
+      "repository": "droidrun/mobilerun-portal",
+      "requested_as": "droidrun/droidrun-portal",
+      "clone_url": "https://github.com/droidrun/mobilerun-portal.git",
+      "default_branch_at_review": "main",
+      "revision": "49d92110ed9faeaad4c8f65b681c4a3012b1de25",
+      "commit_date": "2026-11-06T22:32:34+04:00",
+      "archived_at_review": false,
+      "license_summary": "AGPL-3.0-or-later",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "app/src/main",
+        "docs"
+      ],
+      "reviewed_paths": [
+        "app/src/main/java/com/mobilerun/portal/core/AccessibilityTraversalGuard.kt",
+        "app/src/main/java/com/mobilerun/portal/service/ActionDispatcher.kt"
+      ],
+      "decision": "Android reference",
+      "lesson": "Renamed Android Portal supplies accessibility traversal/action and screenshot machinery. Its license differs from the MIT Python harness. Study bounded traversal and dispatch; permission-auto-accept helpers are not selected for Cue."
+    },
+    {
+      "repository": "modelcontextprotocol/kotlin-sdk",
+      "requested_as": "modelcontextprotocol/kotlin-sdk",
+      "clone_url": "https://github.com/modelcontextprotocol/kotlin-sdk.git",
+      "default_branch_at_review": "main",
+      "revision": "af5d784d11bb8eaa09a825429f95ee0f44e630f4",
+      "commit_date": "2026-11-13T18:22:05+01:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0 / MIT transition (see LICENSE)",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "kotlin-sdk-client",
+        "kotlin-sdk-core",
+        "kotlin-sdk-server",
+        "samples"
+      ],
+      "reviewed_paths": [
+        "kotlin-sdk-client/src/commonMain/kotlin/io/modelcontextprotocol/kotlin/sdk/client/Client.kt",
+        "kotlin-sdk-client/src/commonMain/kotlin/io/modelcontextprotocol/kotlin/sdk/client/StreamableHttpClientTransport.kt",
+        "LICENSE"
+      ],
+      "decision": "library candidate",
+      "lesson": "Official client exposes listTools/callTool with typed results and request options. Candidate for selected remote or phone-local MCP tools. Pin SDK/transport versions and verify Kotlin/Android engine compatibility and APK cost before adoption."
+    },
+    {
+      "repository": "modelcontextprotocol/python-sdk",
+      "requested_as": "modelcontextprotocol/python-sdk",
+      "clone_url": "https://github.com/modelcontextprotocol/python-sdk.git",
+      "default_branch_at_review": "main",
+      "revision": "77001c96f9507be0f4d009b83210a384a5e08bda",
+      "commit_date": "2026-11-05T11:45:39+01:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "examples",
+        "src",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "src/mcp/client/session.py",
+        "src/mcp/server/fastmcp.py",
+        "examples/stories/tools/server.py"
+      ],
+      "decision": "specialized-server candidate",
+      "lesson": "Current 2.x source renamed FastMCP to MCPServer; the old module raises an import error. Suitable for optional specialized workers, with version-pinned examples. No assumption that all Python/server dependencies already run on Android."
+    },
+    {
+      "repository": "deedy5/ddgs",
+      "requested_as": "deedy5/ddgs",
+      "clone_url": "https://github.com/deedy5/ddgs.git",
+      "default_branch_at_review": "main",
+      "revision": "8e74959141106702645020dcb853c6453b5e5195",
+      "commit_date": "2026-10-24T00:12:27+03:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "sparse_paths": [
+        "ddgs",
+        "tests"
+      ],
+      "reviewed_paths": [
+        "ddgs/engines/duckduckgo.py",
+        "ddgs/exceptions.py",
+        "pyproject.toml"
+      ],
+      "decision": "search-adapter reference",
+      "lesson": "Small provider adapters show request/extraction contracts and explicit rate-limit errors. Dependencies include native primp and lxml: inspect/port useful patterns to Android HTTPS clients instead of assuming pip installation on Termux will work."
+    },
+    {
+      "repository": "cheaper-inference/OmniRoute",
+      "requested_as": "cheaper-inference/OmniRoute",
+      "clone_url": "https://github.com/cheaper-inference/OmniRoute.git",
+      "default_branch_at_review": "release/v3.8.54",
+      "revision": "82f60e5ef66cb8f4fd92929a44c3679ef844f84a",
+      "commit_date": "2026-11-13T14:58:36-03:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "@omniroute",
+        "docs/features",
+        "docs/guides",
+        "docs/reference",
+        "open-sse",
+        "packages",
+        "src"
+      ],
+      "reviewed_paths": [
+        "docs/guides/TERMUX_GUIDE.md",
+        "open-sse/services/combo/targetExhaustion.ts",
+        "open-sse/utils/requestLogger.ts",
+        "package.json"
+      ],
+      "decision": "optional on-phone delegation gateway candidate",
+      "lesson": "Documents an Android/Termux server and implements quota/error/fallback routing. Separate it from the private local-inference route. Node/native dependency footprint and actual API quotas remain unmeasured. Request logging supports prompt/response/stream capture, including stream chunks when logging is disabled unless separately disabled; privacy needs explicit configuration and verification."
+    },
+    {
+      "repository": "letta-ai/letta-code",
+      "requested_as": "letta-ai/letta-code",
+      "clone_url": "https://github.com/letta-ai/letta-code.git",
+      "default_branch_at_review": "main",
+      "revision": "5c04f79eba452fd80a85c08f673dbdca9d3c7e62",
+      "commit_date": "2026-11-13T10:37:00-08:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "hooks",
+        "src"
+      ],
+      "reviewed_paths": [
+        "src/memory-constraints.ts",
+        "src/permissions/cross-agent-guard.ts",
+        "README.md"
+      ],
+      "decision": "memory reference",
+      "lesson": "Active implementation offers explicit memory budgets, protected memory files and per-agent ownership. Adapt those ideas to app-private, user-visible memory. Do not enable unbounded background reflection, syncing personal memory or a second agent server by default."
+    },
+    {
+      "repository": "microsoft/playwright",
+      "requested_as": "microsoft/playwright",
+      "clone_url": "https://github.com/microsoft/playwright.git",
+      "default_branch_at_review": "main",
+      "revision": "0ad21f1d34e40a51649a97e14da787172d68d073",
+      "commit_date": "2026-11-13T10:09:23-08:00",
+      "archived_at_review": false,
+      "license_summary": "Apache-2.0",
+      "license_files": [
+        "LICENSE",
+        "NOTICE"
+      ],
+      "sparse_paths": [
+        "packages/injected/src",
+        "packages/isomorphic",
+        "packages/playwright-core/src/server/android",
+        "packages/playwright-core/src/server/injected",
+        "packages/playwright-core/src/tools/backend",
+        "packages/playwright-core/src/tools/mcp",
+        "packages/playwright/src/mcp",
+        "tests/mcp"
+      ],
+      "reviewed_paths": [
+        "packages/playwright-core/src/tools/backend/snapshot.ts",
+        "packages/playwright-core/src/tools/backend/mouse.ts",
+        "packages/injected/src/ariaSnapshot.ts"
+      ],
+      "decision": "browser implementation reference",
+      "lesson": "Actual MCP/backend code binds actions to observed element references and captures a fresh snapshot after input. ARIA snapshot implementation filters nodes and maps elements to refs. Adapt the design to an owned WebView; it does not provide unrestricted access to the user's Chrome tabs."
+    },
+    {
+      "repository": "OpenHands/software-agent-sdk",
+      "requested_as": "OpenHands/software-agent-sdk",
+      "clone_url": "https://github.com/OpenHands/software-agent-sdk.git",
+      "default_branch_at_review": "main",
+      "revision": "4c2cae33c3d5cfdb3ef5d028ce736cc0843bf72a",
+      "commit_date": "2026-11-13T19:55:52+01:00",
+      "archived_at_review": false,
+      "license_summary": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "sparse_paths": [
+        "docs",
+        "examples",
+        "openhands-sdk",
+        "openhands-tools"
+      ],
+      "reviewed_paths": [
+        "openhands-sdk/openhands/sdk/agent/agent.py",
+        "openhands-sdk/openhands/sdk/tool/tool.py",
+        "openhands-sdk/openhands/sdk/tool/builtins/classify_and_switch_llm.py"
+      ],
+      "decision": "agent-loop reference",
+      "lesson": "Actual agent step, schema validation and model-routing code are here. Adapt structured actions/results and execution state. Cue should retain the phone model as owner and delegate a bounded subtask, rather than switching the entire private conversation to a remote model."
+    }
+  ]
+}
