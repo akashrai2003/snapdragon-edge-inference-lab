@@ -74,6 +74,7 @@ class CueChatView(
     private var waitingForAnswer = false
     private var monitoringInterruption = false
     private var interrupting = false
+    private var interruptedEcho = ""
     private var followUpListening = false
     private var followUpPending = false
     private var nextMonitorAt = 0L
@@ -522,6 +523,11 @@ class CueChatView(
             if (voiceTurn.supported) {
                 val began =
                     voiceTurn.start(
+                        onReady = {
+                            voiceState = "recording"
+                            voiceLabel.text = if (followUp) "Anything else?" else "I’m listening."
+                            updateAction()
+                        },
                         onLevel = { level ->
                             waves.forEachIndexed { i, bar ->
                                 bar.layoutParams =
@@ -551,7 +557,12 @@ class CueChatView(
                             error.visibility = View.VISIBLE
                         },
                     )
-                if (began) return@whenQuiet
+                if (began) {
+                    voiceState = "preparing"
+                    voiceLabel.text = "Getting ready…"
+                    updateAction()
+                    return@whenQuiet
+                }
             }
             val started =
                 recorder.startRecording(
@@ -629,6 +640,7 @@ class CueChatView(
     }
 
     private fun finishRecognizedVoice(value: String) {
+        val wasInterrupt = interrupting
         val wasFollowUp = followUpListening || interrupting
         followUpListening = false
         interrupting = false
@@ -640,6 +652,19 @@ class CueChatView(
         val decision = ConversationPolicy.classify(value, "", false)
         if (decision.intent == ConversationPolicy.Intent.END) {
             endConversation(stopAnswer = true)
+            return
+        }
+        if (
+            wasInterrupt &&
+                conversationActive &&
+                decision.intent == ConversationPolicy.Intent.QUESTION &&
+                ConversationPolicy.classify(decision.text, interruptedEcho, false).intent ==
+                    ConversationPolicy.Intent.ECHO
+        ) {
+            // A clipped playback echo must never become the next submitted question.
+            followUpPending = true
+            handler.postDelayed(resumeListening, 300)
+            updateAction()
             return
         }
         if (value.isBlank() || decision.intent == ConversationPolicy.Intent.INTERRUPT) {
@@ -765,11 +790,20 @@ class CueChatView(
         AudioGate.hold("voice-input")
         val began =
             voiceTurn.start(
+                forInterruption = true,
                 onLevel = {},
                 onPartial = { value ->
                     if (interrupting)
                         voicePreview.text = ConversationPolicy.classify(value, "", false).text
-                    else acceptInterruption(interruptionDecision(value))
+                    else {
+                        val decision = interruptionDecision(value)
+                        if (
+                            decision.intent == ConversationPolicy.Intent.ECHO &&
+                                WakeCandidate.matches(value)
+                        )
+                            voiceTurn.rejectWake()
+                        else acceptInterruption(decision)
+                    }
                 },
                 onFinishing = {
                     if (interrupting) {
@@ -830,6 +864,8 @@ class CueChatView(
             return
         }
         interrupting = true
+        interruptedEcho = SpeechOutput.echoText
+        voiceTurn.continueAsQuestion()
         waitingForAnswer = false
         voiceState = "recording"
         // Keep this recognizer alive: restarting would lose the start of the user's question.

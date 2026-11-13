@@ -7,17 +7,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.*
 import android.provider.Settings
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 
-/** Explicit on-device recognition only. Dedicated KWS remains an unsuccessful research spike. */
+/** Continuous, app-owned offline capture. No timed platform recognizer restart or system tones. */
 class VoiceWakeService : Service() {
     companion object {
-        const val CHANNEL_ID = "cue_handsfree"
+        const val CHANNEL_ID = "cue_handsfree_quiet"
         const val NOTIF_ID = 4040
         const val ACTION_STOP = "ai.snapdragon.edge.STOP_CUE_WAKE"
         private var instance: VoiceWakeService? = null
@@ -30,9 +27,8 @@ class VoiceWakeService : Service() {
         var isServiceRunning = false
             private set
 
-        @Volatile
-        var isCapturing = false
-            private set
+        val isCapturing
+            get() = QuietSpeechSession.wakeCapturing
 
         @Volatile
         var status = "Hands-free off"
@@ -51,42 +47,28 @@ class VoiceWakeService : Service() {
             context.stopService(Intent(context, VoiceWakeService::class.java))
         }
 
-        internal fun matches(value: String): Boolean {
-            val normalized = value.lowercase(java.util.Locale.ROOT).replace(Regex("[^a-z ]"), " ")
-            return Regex("\\bhey\\s*(cue|queue|q)\\b").containsMatchIn(normalized)
-        }
+        internal fun matches(value: String): Boolean = WakeCandidate.matches(value)
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private var recognizer: SpeechRecognizer? = null
+    private var capture: QuietSpeechSession? = null
     private var alive = false
-    private var listening = false
-    private var restartPending = false
-    private var retryDelay = 100L
     private var nextWake = 0L
-    private var speechStart = 0L
-    private var sessionStarted = 0L
-    private var recognitionGeneration = 0
     private var openingCard: View? = null
-    private val restart = Runnable {
-        restartPending = false
-        listen()
-    }
+    private var candidate = WakeCandidate()
     private val coordinator =
         object : Runnable {
             override fun run() {
                 if (!alive) return
                 if (AudioGate.held) {
-                    if (recognizer != null) releaseRecognizer()
+                    releaseCapture()
                     setStatus("Paused while you use Cue")
-                } else if (SystemClock.elapsedRealtime() >= nextWake) {
-                    if (!listening && !restartPending) schedule(0)
-                    else if (listening && SystemClock.elapsedRealtime() - sessionStarted > 20000) {
-                        releaseRecognizer()
-                        schedule(100)
-                    }
+                } else if (
+                    SystemClock.elapsedRealtime() >= nextWake && capture == null && !isCapturing
+                ) {
+                    listen()
                 }
-                handler.postDelayed(this, 100)
+                handler.postDelayed(this, 150)
             }
         }
 
@@ -97,10 +79,18 @@ class VoiceWakeService : Service() {
         instance = this
         getSystemService(NotificationManager::class.java)
             .createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Hey Cue", NotificationManager.IMPORTANCE_LOW)
-                    .apply { setShowBadge(false) }
+                NotificationChannel(
+                        CHANNEL_ID,
+                        "Hey Cue · silent",
+                        NotificationManager.IMPORTANCE_LOW,
+                    )
+                    .apply {
+                        setShowBadge(false)
+                        setSound(null, null)
+                        enableVibration(false)
+                    }
             )
-        status = "Starting wake listener"
+        status = "Starting Hey Cue"
         startForeground(NOTIF_ID, notification())
     }
 
@@ -109,10 +99,8 @@ class VoiceWakeService : Service() {
             stop(this)
             return START_NOT_STICKY
         }
-        // Debug-only integration probe: verify Android's background presentation policy without
-        // collecting or synthesizing microphone input. The service remains non-exported.
         if (BuildConfig.DEBUG && intent?.action == "ai.snapdragon.edge.VERIFY_OPENING") {
-            releaseRecognizer()
+            releaseCapture()
             nextWake = SystemClock.elapsedRealtime() + 1200
             present(SystemClock.elapsedRealtime(), false)
             return START_NOT_STICKY
@@ -125,13 +113,6 @@ class VoiceWakeService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        if (Build.VERSION.SDK_INT < 31 || !SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
-            status = "Offline wake recognition is unavailable on this phone. Use Speak instead."
-            getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification())
-            stopForeground(STOP_FOREGROUND_DETACH)
-            stopSelf()
-            return START_NOT_STICKY
-        }
         alive = true
         isServiceRunning = true
         getSharedPreferences("mira", MODE_PRIVATE).edit().putBoolean("handsfree", true).apply()
@@ -139,163 +120,60 @@ class VoiceWakeService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun initialize() {
-        if (Build.VERSION.SDK_INT < 31) return
-        if (recognizer != null) return
-        val generation = ++recognitionGeneration
-        recognizer =
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(this).apply {
-                setRecognitionListener(
-                    object : RecognitionListener {
-                        override fun onReadyForSpeech(params: Bundle?) {
-                            if (generation != recognitionGeneration) return
-                            if (alive) {
-                                isCapturing = true
-                                setStatus("Listening for Hey Cue")
-                            }
-                        }
-
-                        override fun onBeginningOfSpeech() {
-                            if (generation != recognitionGeneration) return
-                            speechStart = SystemClock.elapsedRealtime()
-                        }
-
-                        override fun onRmsChanged(value: Float) {}
-
-                        override fun onBufferReceived(buffer: ByteArray?) {}
-
-                        // End-of-speech is not terminal: wait for results/error before restarting.
-                        override fun onEndOfSpeech() {}
-
-                        override fun onPartialResults(results: Bundle?) {
-                            if (generation != recognitionGeneration) return
-                            examine(results)
-                        }
-
-                        override fun onResults(results: Bundle?) {
-                            if (generation != recognitionGeneration) return
-                            listening = false
-                            isCapturing = false
-                            retryDelay = 100
-                            if (!examine(results)) schedule(80)
-                        }
-
-                        override fun onError(error: Int) {
-                            if (generation != recognitionGeneration) return
-                            listening = false
-                            isCapturing = false
-                            if (
-                                !alive || AudioGate.held || SystemClock.elapsedRealtime() < nextWake
-                            )
-                                return
-                            when (error) {
-                                SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> {
-                                    setStatus("Microphone access is off")
-                                    stopSelf()
-                                }
-                                SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED,
-                                SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE -> {
-                                    setStatus(
-                                        "Download offline English speech in your phone’s voice settings, then try again."
-                                    )
-                                    alive = false
-                                    isServiceRunning = false
-                                    stopForeground(STOP_FOREGROUND_DETACH)
-                                    stopSelf()
-                                }
-                                SpeechRecognizer.ERROR_NO_MATCH,
-                                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
-                                    retryDelay = 100
-                                    schedule(80)
-                                }
-                                else -> {
-                                    retryDelay = (retryDelay * 2).coerceAtMost(3000)
-                                    schedule(retryDelay)
-                                }
-                            }
-                        }
-
-                        override fun onEvent(type: Int, params: Bundle?) {}
-                    }
-                )
-            }
-    }
-
-    private fun examine(results: Bundle?): Boolean {
-        if (!alive || AudioGate.held || SystemClock.elapsedRealtime() < nextWake) return false
-        val alternatives =
-            results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) ?: return false
-        if (alternatives.none { matches(it) }) return false
-        val detected = SystemClock.elapsedRealtime()
-        CueDiagnostics.event(this, "wake_match")
-        nextWake = detected + 1200
-        releaseRecognizer()
-        android.util.Log.i(
-            "CueTiming",
-            "wake_match_from_speech_start_ms=${if(speechStart>0) detected-speechStart else -1}",
-        )
-        present(detected)
-        return true
-    }
-
     private fun listen() {
-        if (!alive || AudioGate.held || listening || SystemClock.elapsedRealtime() < nextWake)
-            return
-        try {
-            initialize()
-            listening = true
-            sessionStarted = SystemClock.elapsedRealtime()
-            speechStart = 0L
-            recognizer?.startListening(
-                Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(
-                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
-                    )
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                    putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-                    putExtra(
-                        RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
-                        400L,
-                    )
-                    putExtra(
-                        RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
-                        300L,
-                    )
-                    if (Build.VERSION.SDK_INT >= 33)
-                        putStringArrayListExtra(
-                            RecognizerIntent.EXTRA_BIASING_STRINGS,
-                            arrayListOf("Hey Cue", "Hey Q", "Hey queue"),
-                        )
-                }
+        if (!alive || AudioGate.held || capture != null || isCapturing) return
+        candidate = WakeCandidate()
+        setStatus("Getting Hey Cue ready…")
+        lateinit var current: QuietSpeechSession
+        current =
+            QuietSpeechSession(
+                applicationContext,
+                wakeOnly = true,
+                singleTurn = false,
+                onReady = {
+                    if (capture === current && alive) {
+                        CueDiagnostics.event(this, "wake_capture_started")
+                        setStatus("Listening for Hey Cue")
+                    }
+                },
+                onPartial = { value -> if (capture === current) examine(value, false) },
+                onFinal = { value -> if (capture === current) examine(value, true) },
+                onError = {
+                    if (capture === current && alive) {
+                        capture = null
+                        alive = false
+                        isServiceRunning = false
+                        getSharedPreferences("mira", MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("handsfree", false)
+                            .apply()
+                        setStatus("Hey Cue paused. Open Cue to try again.")
+                        getSystemService(NotificationManager::class.java)
+                            .notify(NOTIF_ID, notification())
+                        stopForeground(STOP_FOREGROUND_DETACH)
+                        stopSelf() // Fail once, quietly. Never retry in an audible loop.
+                    }
+                },
+                onStopped = { CueDiagnostics.event(this, "wake_capture_stopped") },
             )
-        } catch (_: Exception) {
-            listening = false
-            isCapturing = false
-            retryDelay = (retryDelay * 2).coerceAtMost(3000)
-            schedule(retryDelay)
-        }
+        capture = current
+        current.start()
     }
 
-    private fun schedule(delay: Long) {
-        if (!alive || AudioGate.held || restartPending) return
-        restartPending = true
-        handler.postDelayed(restart, delay)
+    private fun examine(value: String, final: Boolean) {
+        if (!alive || AudioGate.held || SystemClock.elapsedRealtime() < nextWake) return
+        val detected = SystemClock.elapsedRealtime()
+        if (!candidate.accept(value, detected, final)) return
+        CueDiagnostics.event(this, "wake_match")
+        nextWake = detected + 1500
+        releaseCapture()
+        present(detected)
     }
 
-    private fun releaseRecognizer() {
-        recognitionGeneration++
-        handler.removeCallbacks(restart)
-        restartPending = false
-        listening = false
-        isCapturing = false
-        val old = recognizer
-        recognizer = null
-        runCatching {
-            old?.cancel()
-            old?.destroy()
-        }
+    private fun releaseCapture() {
+        capture?.cancel()
+        capture = null
+        // The worker clears isCapturing only after AudioRecord is actually closed.
     }
 
     private fun setStatus(value: String) {
@@ -449,6 +327,8 @@ class VoiceWakeService : Service() {
             .setContentIntent(open)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setSound(null)
+            .setDefaults(0)
             .addAction(Notification.Action.Builder(null, "Open Cue", open).build())
             .addAction(Notification.Action.Builder(null, "Turn off", stop).build())
             .build()
@@ -457,9 +337,11 @@ class VoiceWakeService : Service() {
     override fun onDestroy() {
         alive = false
         isServiceRunning = false
-        releaseRecognizer()
+        status = "Hands-free off"
+        releaseCapture()
         hideOpeningCard()
         instance = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
         handler.removeCallbacksAndMessages(null)
         super.onDestroy()
     }

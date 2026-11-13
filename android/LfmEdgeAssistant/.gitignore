@@ -12,3 +12,8 @@ research/keyword-spotting/jniLibs/
 
 # Device captures may contain personal chats, wallpaper, or notifications.
 design/floating-before.png
+
+# Reproducibly fetched by scripts/prepare_speech.py
+app/src/main/assets/speech/
+
+.kotlin/

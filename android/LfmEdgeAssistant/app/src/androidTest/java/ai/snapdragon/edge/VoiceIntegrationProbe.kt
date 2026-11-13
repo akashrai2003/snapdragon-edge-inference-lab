@@ -11,14 +11,25 @@ import android.os.SystemClock
  */
 class VoiceIntegrationProbe : Instrumentation() {
     private var modelSample = false
+    private var quietCheck = false
 
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         modelSample = arguments?.getString("model") == "true"
+        quietCheck = arguments?.getString("quiet") == "true"
         start()
     }
 
     override fun onStart() {
+        if (quietCheck) {
+            val result = QuietWakeChecks.run(this)
+            finish(
+                if (result.getString("result") == "PASS") Activity.RESULT_OK
+                else Activity.RESULT_CANCELED,
+                result,
+            )
+            return
+        }
         val report = Bundle()
         var activity: Activity? = null
         val prefs = VoiceReplyPreferences.store(targetContext)

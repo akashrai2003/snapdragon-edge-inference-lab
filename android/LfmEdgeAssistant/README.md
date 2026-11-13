@@ -16,14 +16,14 @@
 - Conversations list with search, rename, delete, and new threads; selectable basic Markdown/code text; live Copy; Read aloud/Stop speaking using an installed offline voice.
 - Image picker and Android text/image Share input. Images are resized and copied into private app storage; image requests use the existing vision endpoint. These paths still need broader provider/image testing.
 - Widget with separate Ask anything and Speak actions, compact/wide layouts, and last-checked readiness.
-- Experimental “Hey Cue” using Android's **explicit on-device SpeechRecognizer**, early partial matching, one restart loop, stale-callback protection, and microphone coordination. The background wake listener pauses during foreground interaction and speech playback; the visible conversation owns a separate on-device recognition turn while active.
+- “Hey Cue” uses one continuous, app-owned AudioRecord with a bundled offline Vosk decoder. It does not repeatedly launch Android’s short speech-recognition sessions or their system tones. Capture pauses for foreground Cue interaction; the visible conversation owns its own quiet turn.
 - A genuine `TYPE_APPLICATION_OVERLAY` Cue card on wake before opening the conversation. This addresses the phone's background-activity restriction after the user enables Display over other apps. Notification/widget entry remains available. Locked phones receive a notification rather than automatic question recording.
 - Microphone/notification/overlay setup, bounded recording and no-speech behavior, local timing/error diagnostics without speech text, and truthful assistant start/stop verification.
 - Versioned runtime scripts and loopback controller protocol: exact routes, POST-only mutation, per-run control token, rejected browser Origin headers, and no wildcard CORS. The token endpoint is protected against cross-origin reads by the browser; this is **not** authentication against malicious local Android applications.
 
 ## Connections and privacy
 
-The app uses the existing phone services at `127.0.0.1:8080` (answers/vision), `8081` (Whisper fallback transcription), and `8082` (runtime control). On supported phones, one-shot voice input uses Android’s explicit on-device recognition and end-of-speech detection. Speech is submitted automatically by default; Settings can enable review before sending, optional spoken replies, and continued conversation. Continued conversation defaults on for voice requests and is visibly indicated; spoken replies still default off. Expanding the panel ends hands-free listening while retaining the thread and active answer; tap the microphone in the full view to resume conversation. The user confirmed the wake → record → stop on silence → send flow on the connected phone. No hosted chat API or analytics is configured. Wake recognition explicitly requires Android on-device recognition support; the app does not fall back to a cloud speech recognizer. Hands-free remains experimental and can consume battery.
+The app uses the existing phone services at `127.0.0.1:8080` (answers/vision), `8081` (Whisper fallback transcription), and `8082` (runtime control). Voice capture and wake recognition use the bundled offline Vosk model and app-owned AudioRecord, with bounded endpointing and cancellation. The Android microphone indicator stays visible while hands-free is enabled; Turn off releases capture. There is no app-level system-volume muting. Speech is submitted automatically by default; Settings can enable review before sending, optional spoken replies, and continued conversation. Continued conversation defaults on for voice requests and is visibly indicated; spoken replies still default off. Expanding the panel ends hands-free listening while retaining the thread and active answer; tap the microphone in the full view to resume conversation. The user confirmed the original wake → record → stop on silence → send flow and that the new quiet wake path opens Cue on the connected phone. No hosted chat API or analytics is configured. The app does not invoke a platform/cloud recognizer for wake or voice turns. Missing model/native/microphone support stops hands-free quietly and requires an explicit retry. Hands-free remains experimental and can consume battery.
 
 The existing model/speech daemons still bind to all network interfaces as configured before this update, preserving the user's existing laptop workflow. The app itself permits cleartext only to loopback. Restricting those daemons to loopback, adding deliberate LAN sharing, stronger application-to-daemon authentication, and a persistent app-owned runtime are follow-up work.
 
@@ -31,10 +31,12 @@ Saved chats and imported images stay in private app storage and are excluded fro
 
 ## Build and check
 
-Java 11, Android SDK platform 33, and the existing Gradle wrapper:
+JDK 17, Android SDK platform 33, Build Tools 35.0.0, and the checked-in Gradle 8.11.1 wrapper (AGP 8.9.2 / Kotlin 2.2.21). Set JAVA_HOME to your JDK 17 installation:
 
 ```sh
-./gradlew assembleDebug testDebugUnitTest lintDebug
+python3 scripts/prepare_speech.py
+./gradlew assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
+python3 scripts/check_apk_alignment.py app/build/outputs/apk/debug/app-debug.apk
 python3 -m unittest discover -s runtime -p 'test_*.py' -v
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
@@ -44,15 +46,17 @@ Physical-device voice smoke test (briefly plays a test phrase and opens the micr
 ```sh
 ./gradlew assembleDebugAndroidTest
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-adb shell am instrument -w ai.snapdragon.edge.test/ai.snapdragon.edge.VoiceIntegrationProbe
+python3 scripts/verify_voice_device.py
+# Quiet native decoder + 45-second recording soak + background opening:
+python3 scripts/verify_voice_device.py --quiet
 # Optional real-model timing/Stop sample; removes its temporary thread afterward:
-adb shell am instrument -w -e model true ai.snapdragon.edge.test/ai.snapdragon.edge.VoiceIntegrationProbe
+python3 scripts/verify_voice_device.py --model
 adb uninstall ai.snapdragon.edge.test
 ```
 
-The native instrumentation probe restores the original review/speech preferences, selected thread, and draft. It never submits microphone input: review is forced on for its recognition checks. Instrumentation stops the normal app process; restore an enabled wake service from the foreground afterward. The probe APK is separate from the shipped app.
+The native instrumentation probe restores the original review/speech preferences, selected thread, and draft. It never submits microphone input: review is forced on for its recognition checks. Instrumentation stops the normal app process; the helper restores previously enabled wake capture from the foreground after a successful probe. Finish all automated tests before asking for a live voice check. The probe APK is separate from the shipped app.
 
-The normal app has no native KWS dependency and is approximately 2.5 MB. The rejected keyword-spotting experiment and checksum-pinned asset preparation are documented under `research/keyword-spotting/`; those binaries/models are ignored by Git and are not packaged.
+Cue 3.3 targets the arm64 phone and packages the pinned offline English model and native runtime; the debug APK is approximately 53 MB. Model weights/native libraries are not committed to Git. The preparation script validates the official archive’s SHA-256; Gradle verifies that prepared assets exist. Vosk 0.3.75 and JNA 5.18.1 are packaged with the updated Android plugin for 16 KB compatibility. Both native ZIP offsets and ELF LOAD/RELRO layout are checked before installation. The rejected sherpa keyword-spotting experiment and checksum-pinned asset preparation are documented under `research/keyword-spotting/`; those binaries/models are ignored by Git and are not packaged.
 
 ## Runtime controller
 
@@ -63,6 +67,7 @@ Before the device update, controller scripts were backed up under `/sdcard/Downl
 ## Remaining work
 
 - Measure real spoken wake latency, missed/false activations, long idle/background/locked behavior, and paired unplugged battery use. A successful UI-opening probe is not a wake accuracy benchmark.
+- Benchmark long idle battery/CPU use, phonetic confusables, and background reliability of the continuous Vosk path. A 45-second stable-capture check is not a battery or wake-accuracy benchmark.
 - Develop/train/select a dedicated acoustic wake model that actually recognizes Cue reliably. The tested small KWS model failed both a user trial and synthetic Cue samples and was removed from the shipped path.
 - Measure real barge-in latency, speaker echo/false interruptions, headset/Bluetooth routing, recognition gaps, follow-up timeout and long-session battery use. A text echo filter cannot provide full acoustic echo cancellation or speaker identification.
 - Profile time to first visible model token separately from the TTS handoff; current samples are dominated by model response startup.

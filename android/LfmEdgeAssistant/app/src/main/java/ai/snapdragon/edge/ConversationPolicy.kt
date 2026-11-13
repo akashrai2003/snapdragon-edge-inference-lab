@@ -16,7 +16,10 @@ object ConversationPolicy {
     data class Decision(val intent: Intent, val text: String = "")
 
     private fun words(value: String): List<String> =
-        Regex("[\\p{L}\\p{N}']+").findAll(value.lowercase(Locale.ROOT)).map { it.value }.toList()
+        Regex("[\\p{L}\\p{N}']+")
+            .findAll(value.lowercase(Locale.ROOT))
+            .map { if (it.value in setOf("queue", "q")) "cue" else it.value }
+            .toList()
 
     fun classify(
         value: String,

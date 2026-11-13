@@ -62,3 +62,17 @@ Implementation uses Android's documented [queued TTS](https://developer.android.
 - The model server was temporarily started for these checks because it was initially stopped. It is restored to the stopped state afterward. The instrumentation test app and temporary ADB forward are removed. User app preferences, current thread, and draft are restored by the probe.
 
 - The persistent runtime controller was also found stopped after the idle interval. Its existing loopback daemon was restarted, and `/status` plus authenticated-session issuance were verified. Model inference remains stopped until requested. The previously enabled foreground wake listener was restored after instrumentation.
+
+
+## Quiet capture and native compatibility update (3.3.1)
+
+- Removed Android SpeechRecognizer from automatic wake and foreground voice turns. Cue owns a continuous offline AudioRecord/decoder session and fails quietly on errors; the required microphone indicator remains visible while hands-free is enabled. No global volume or privacy-indicator settings were changed.
+- User confirmed the quiet wake now opens Cue, then provided an Android 16 KB compatibility warning. The warning exposed both APK ZIP placement and JNA RELRO layout problems in the first quiet build. These were fixed in the build/native dependency rather than hidden with “Don't show again”.
+- Updated JDK/Gradle/AGP/Kotlin/JNA together (JDK 17, Gradle 8.11.1, AGP 8.9.2, Kotlin 2.2.21, JNA 5.18.1). The wrapper JAR matches Gradle’s published checksum. SDK/target 33 remain unchanged.
+- New APK passes the official Build Tools 35 `zipalign -c -P 16 4` and custom ZIP / ELF LOAD / RELRO checks for both native libraries. The old APK fails this guard. After installation, the physical-device UI check found **no Android app compatibility pane**. This is not a 16 KB-kernel emulator benchmark; the connected phone reports a 4 KB kernel page size.
+- **30 JVM tests and lint pass**. Final-device probes pass native synthetic wake/confusable decoding, **45 seconds with the same AudioRecord session** and no timed restart, silent notification configuration, background overlay-to-activity opening, and microphone release on Turn off.
+- Existing device speech tests also pass with the new backend: early queued playback, mute/stale-callback protection, follow-up after playback drain, cancel without restart, and microphone cancellation on dismissal. Extra echo guards normalize Cue/queue/q and reject playback echo as a follow-up prompt.
+- Test orchestration now restores previously enabled hands-free after instrumentation, which otherwise stops the normal app process. The initial quiet/no-opening user check was confounded by such a test; the subsequent live check was requested after capture was verified active and unsilenced. All automated device checks finish before a live user check is requested.
+- Instrumentation APK removed, temporary ADB forwards absent, and hands-free restored. During final checks battery was about 32°C and thermal status 0. Model/runtime server settings and user conversations were unchanged.
+
+See [ANDROID_RELIABILITY_REVIEW.md](ANDROID_RELIABILITY_REVIEW.md) for the skill sources, implementation review, build decisions, and remaining noise/battery/phonetic-confusable validation.

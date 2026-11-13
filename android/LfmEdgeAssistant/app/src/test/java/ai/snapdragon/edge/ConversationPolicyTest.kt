@@ -97,4 +97,21 @@ class ConversationPolicyTest {
             ConversationPolicy.classify("make it shorter", "", false).intent,
         )
     }
+
+    @Test
+    fun `speaker echo recognizes the Cue queue homophone`() {
+        val spoken = "Say Hey Cue when you want to talk to me."
+        assertEquals(
+            ConversationPolicy.Intent.ECHO,
+            ConversationPolicy.classify("hey queue", spoken, true).intent,
+        )
+        assertEquals(
+            ConversationPolicy.Intent.ECHO,
+            ConversationPolicy.classify("hey q when you want to talk", spoken, true).intent,
+        )
+        assertEquals(
+            ConversationPolicy.Intent.QUESTION,
+            ConversationPolicy.classify("Hey Queue tell me about Jupiter", spoken, true).intent,
+        )
+    }
 }

@@ -350,7 +350,7 @@ class MainActivity : CueActivity() {
             body,
             text(
                     this,
-                    "Say “Hey Cue” to open your assistant. While a conversation is on, ask a follow-up or say “Hey Cue” to interrupt. Hands-free is experimental and may use extra battery.",
+                    "Say “Hey Cue” to open your assistant. While a conversation is on, ask a follow-up or say “Hey Cue” to interrupt. Hands-free keeps the microphone on, so Android shows its microphone dot. Turn hands-free off below to release it. No periodic listening sounds are played.",
                     14f,
                     muted,
                 )
