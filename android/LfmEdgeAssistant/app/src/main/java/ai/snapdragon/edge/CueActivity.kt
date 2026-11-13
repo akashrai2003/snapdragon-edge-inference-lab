@@ -21,6 +21,7 @@ open class CueActivity : Activity() {
     override fun onResume() {
         super.onResume()
         AudioGate.hold(audioOwner)
+        ai.snapdragon.edge.service.VoiceWakeService.restoreFromActivity(this)
         CueSession.refresh()
     }
 

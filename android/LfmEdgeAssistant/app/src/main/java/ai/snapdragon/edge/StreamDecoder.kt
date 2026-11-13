@@ -37,13 +37,11 @@ object StreamDecoder {
             val choice = choices.getJSONObject(0)
             val delta = choice.optJSONObject("delta")
             val content = delta?.opt("content")
-            val reasoning = delta?.opt("reasoning_content")
+            // Stream answer content immediately. Internal reasoning is a separate field,
+            // never a fallback answer to display or feed into spoken playback.
             if (content is String && content.isNotEmpty()) {
                 text.append(content)
                 token(content)
-            } else if (reasoning is String && reasoning.isNotEmpty()) {
-                text.append(reasoning)
-                token(reasoning)
             }
             val finish = choice.opt("finish_reason")
             if (finish is String && finish.isNotBlank()) {

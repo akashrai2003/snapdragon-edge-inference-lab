@@ -20,6 +20,7 @@ class VoiceWakeService : Service() {
         private var instance: VoiceWakeService? = null
 
         fun panelVisible() {
+            instance?.let { CueDiagnostics.event(it, "wake_panel_visible") }
             instance?.hideOpeningCard()
         }
 
@@ -36,6 +37,28 @@ class VoiceWakeService : Service() {
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, VoiceWakeService::class.java))
+        }
+
+        fun isEnabled(context: Context): Boolean =
+            context
+                .getSharedPreferences("mira", Context.MODE_PRIVATE)
+                .getBoolean("handsfree", false)
+
+        /**
+         * Only call from a resumed activity: microphone foreground services need a visible entry.
+         */
+        fun restoreFromActivity(context: Context) {
+            if (!isEnabled(context) || isServiceRunning) return
+            if (
+                context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                status = "Microphone permission needed for Hey Cue"
+                return
+            }
+            runCatching { start(context) }
+                .onSuccess { CueDiagnostics.event(context, "wake_activity_recovery") }
+                .onFailure { status = "Hey Cue paused. Enable hands-free in Settings." }
         }
 
         fun stop(context: Context) {
@@ -100,24 +123,38 @@ class VoiceWakeService : Service() {
             return START_NOT_STICKY
         }
         if (BuildConfig.DEBUG && intent?.action == "ai.snapdragon.edge.VERIFY_OPENING") {
+            if (!alive) {
+                stopSelf()
+                return START_NOT_STICKY
+            }
             releaseCapture()
             nextWake = SystemClock.elapsedRealtime() + 1200
             present(SystemClock.elapsedRealtime(), false)
+            return START_STICKY
+        }
+        // A system restart has no intent. It must never undo an explicit Turn off.
+        if (intent == null && !isEnabled(this)) {
+            stopSelf()
             return START_NOT_STICKY
         }
-        if (alive) return START_NOT_STICKY
+        if (alive) return START_STICKY
         if (
             checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
                 android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
+            status = "Microphone permission needed for Hey Cue"
             stopSelf()
             return START_NOT_STICKY
         }
         alive = true
         isServiceRunning = true
         getSharedPreferences("mira", MODE_PRIVATE).edit().putBoolean("handsfree", true).apply()
+        CueDiagnostics.event(
+            this,
+            if (intent == null) "wake_system_recovery" else "wake_service_started",
+        )
         handler.post(coordinator)
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun listen() {
@@ -143,10 +180,9 @@ class VoiceWakeService : Service() {
                         capture = null
                         alive = false
                         isServiceRunning = false
-                        getSharedPreferences("mira", MODE_PRIVATE)
-                            .edit()
-                            .putBoolean("handsfree", false)
-                            .apply()
+                        CueDiagnostics.event(this, "wake_capture_error")
+                        // Retain the user's opt-in, but retry only on their next visible entry.
+                        // stopSelf prevents a persistent capture failure from becoming a loop.
                         setStatus("Hey Cue paused. Open Cue to try again.")
                         getSystemService(NotificationManager::class.java)
                             .notify(NOTIF_ID, notification())
@@ -201,15 +237,27 @@ class VoiceWakeService : Service() {
             )
         }
         runCatching {
-            startActivity(
-                floatingIntent()
-                    .putExtra("wake_detected_at", detected)
-                    .putExtra("auto_listen", autoListen)
-            )
-        }
+                // On this device even SYSTEM_ALERT_WINDOW permission alone does not permit a
+                // background activity launch. Present a real assistant surface first, then open
+                // its conversation automatically once that surface has drawn.
+                if (Settings.canDrawOverlays(this)) showOpeningCard(detected, autoListen)
+                else launchConversation(detected, autoListen)
+            }
+            .onFailure {
+                CueDiagnostics.event(this, "wake_panel_error")
+                setStatus("Tap Open Cue to continue")
+            }
         android.util.Log.i(
             "CueTiming",
             "wake_dispatch_ms=${SystemClock.elapsedRealtime()-detected}",
+        )
+    }
+
+    private fun launchConversation(detected: Long, autoListen: Boolean) {
+        startActivity(
+            floatingIntent()
+                .putExtra("wake_detected_at", detected)
+                .putExtra("auto_listen", autoListen)
         )
     }
 
@@ -232,24 +280,8 @@ class VoiceWakeService : Service() {
         CueUi.add(row, CueUi.brand(this), 0, 48, weight = 1f)
         CueUi.add(row, CueUi.icon(this, "×", "Dismiss Cue") { hideOpeningCard() }, 48, 48)
         CueUi.add(card, row)
-        CueUi.add(
-            card,
-            CueUi.text(this, "A little help, right here.", 23f, CueUi.ink, "serif"),
-            top = 8,
-        )
-        CueUi.add(
-            card,
-            CueUi.button(this, "Open your conversation  ↗", true) {
-                runCatching {
-                    startActivity(
-                        floatingIntent()
-                            .putExtra("wake_detected_at", detected)
-                            .putExtra("auto_listen", autoListen)
-                    )
-                }
-            },
-            top = 16,
-        )
+        CueUi.add(card, CueUi.text(this, "Here for you.", 23f, CueUi.ink, "serif"), top = 8)
+        CueUi.add(card, CueUi.text(this, "Getting ready to listen…", 14f, CueUi.muted), top = 8)
         val params =
             WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT,
@@ -278,21 +310,31 @@ class VoiceWakeService : Service() {
                         card.postDelayed(
                             {
                                 if (openingCard === card)
-                                    runCatching {
-                                        startActivity(
-                                            floatingIntent()
-                                                .putExtra("wake_detected_at", detected)
-                                                .putExtra("auto_listen", autoListen)
-                                        )
-                                    }
+                                    runCatching { launchConversation(detected, autoListen) }
+                                        .onFailure {
+                                            CueDiagnostics.event(this, "wake_panel_error")
+                                            setStatus("Tap Open Cue to continue")
+                                        }
                             },
                             120,
                         )
                     }
                 }
-                handler.postDelayed({ if (openingCard === card) hideOpeningCard() }, 10000)
+                handler.postDelayed(
+                    {
+                        if (openingCard === card) {
+                            CueDiagnostics.event(this, "wake_panel_timeout")
+                            setStatus("Tap Open Cue to continue")
+                            hideOpeningCard()
+                        }
+                    },
+                    4000,
+                )
             }
-            .onFailure { hideOpeningCard() }
+            .onFailure {
+                hideOpeningCard()
+                throw it
+            }
     }
 
     private fun hideOpeningCard() {
@@ -335,7 +377,7 @@ class VoiceWakeService : Service() {
     override fun onDestroy() {
         alive = false
         isServiceRunning = false
-        status = "Hands-free off"
+        status = if (isEnabled(this)) "Hey Cue paused. Open Cue to resume." else "Hands-free off"
         releaseCapture()
         hideOpeningCard()
         instance = null

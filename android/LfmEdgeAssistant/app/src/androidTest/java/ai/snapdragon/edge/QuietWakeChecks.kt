@@ -83,11 +83,15 @@ object QuietWakeChecks {
                         .putExtra("destination", "home")
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
-            probe.runOnMainSync {
+            onMain(probe) {
                 draft = CueSession.current.draft
                 VoiceWakeService.start(context)
             }
             SystemClock.sleep(400)
+            onMain(probe) {
+                activity?.finish()
+                activity = null
+            }
             ParcelFileDescriptor.AutoCloseInputStream(
                     probe.uiAutomation.executeShellCommand("input keyevent KEYCODE_HOME")
                 )
@@ -97,7 +101,7 @@ object QuietWakeChecks {
             }
             var initial = -1
             var starts = 0L
-            probe.runOnMainSync {
+            onMain(probe) {
                 initial = QuietSpeechSession.captureSessionId
                 starts =
                     context
@@ -113,7 +117,7 @@ object QuietWakeChecks {
             }
             repeat(9) {
                 SystemClock.sleep(5000)
-                probe.runOnMainSync {
+                onMain(probe) {
                     check(
                         VoiceWakeService.isCapturing &&
                             QuietSpeechSession.captureSessionId == initial
@@ -137,8 +141,11 @@ object QuietWakeChecks {
                 "notification",
                 "PASS: sound null and vibration disabled; global volume untouched",
             )
+            // Let the recent foreground-entry exemption expire. This must exercise the
+            // service's real background overlay handoff, not instrumentation's shell UID.
+            SystemClock.sleep(5500)
             val monitor = probe.addMonitor(FloatingAssistantActivity::class.java.name, null, false)
-            probe.runOnMainSync {
+            onMain(probe) {
                 context.startService(
                     Intent(context, VoiceWakeService::class.java)
                         .setAction("ai.snapdragon.edge.VERIFY_OPENING")
@@ -151,7 +158,7 @@ object QuietWakeChecks {
                 "background_open",
                 "PASS: background service opened real overlay and floating activity",
             )
-            probe.runOnMainSync {
+            onMain(probe) {
                 panel?.finish()
                 VoiceWakeService.stop(context)
             }
@@ -159,11 +166,39 @@ object QuietWakeChecks {
                 !VoiceWakeService.isCapturing && QuietSpeechSession.captureSessionId < 0
             }
             report.putString("stop", "PASS: microphone released after Turn off")
+
+            // Merely reopening Cue must never undo the user's explicit Turn off.
+            activity = openHome(probe, context)
+            SystemClock.sleep(600)
+            onMain(probe) {
+                check(!VoiceWakeService.isEnabled(context) && !VoiceWakeService.isServiceRunning)
+                VoiceWakeService.start(context)
+            }
+            goHome(probe)
+            await(probe, "capture before recovery check", 10000) { VoiceWakeService.isCapturing }
+            onMain(probe) {
+                // Simulate a stopped service while consent is retained (for example an
+                // app update). This intentionally does not use the Turn off action.
+                context.stopService(Intent(context, VoiceWakeService::class.java))
+            }
+            await(probe, "missing service", 5000) {
+                !VoiceWakeService.isServiceRunning && !VoiceWakeService.isCapturing
+            }
+            onMain(probe) { check(VoiceWakeService.isEnabled(context)) }
+            activity = openHome(probe, context)
+            goHome(probe)
+            await(probe, "visible-entry recovery", 10000) {
+                VoiceWakeService.isServiceRunning && VoiceWakeService.isCapturing
+            }
+            report.putString(
+                "activity_recovery",
+                "PASS: opening Cue restores enabled-but-missing wake; Turn off stays off",
+            )
             report.putString("result", "PASS")
         } catch (error: Throwable) {
             report.putString("result", "FAIL: ${error.message}")
         } finally {
-            probe.runOnMainSync {
+            onMain(probe) {
                 panel?.finish()
                 VoiceWakeService.stop(context)
                 draft?.let {
@@ -180,6 +215,36 @@ object QuietWakeChecks {
         return report
     }
 
+    // Assertions must reach the probe thread so finally can restore preferences and
+    // release the microphone. Throwing inside runOnMainSync crashes the app instead.
+    private fun onMain(probe: Instrumentation, block: () -> Unit) {
+        var failure: Throwable? = null
+        probe.runOnMainSync {
+            try {
+                block()
+            } catch (error: Throwable) {
+                failure = error
+            }
+        }
+        failure?.let { throw it }
+    }
+
+    private fun openHome(probe: Instrumentation, context: Context): Activity =
+        probe.startActivitySync(
+            Intent(context, MainActivity::class.java)
+                .putExtra("destination", "home")
+                // startActivitySync waits for onCreate; reusing singleTop via CLEAR_TOP
+                // only delivers onNewIntent and leaves the test waiting indefinitely.
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        )
+
+    private fun goHome(probe: Instrumentation) {
+        ParcelFileDescriptor.AutoCloseInputStream(
+                probe.uiAutomation.executeShellCommand("input keyevent KEYCODE_HOME")
+            )
+            .use { it.readBytes() }
+    }
+
     private fun await(
         probe: Instrumentation,
         label: String,
@@ -189,7 +254,7 @@ object QuietWakeChecks {
         val until = SystemClock.elapsedRealtime() + timeout
         while (SystemClock.elapsedRealtime() < until) {
             var success = false
-            probe.runOnMainSync { success = condition() }
+            onMain(probe) { success = condition() }
             if (success) return
             SystemClock.sleep(50)
         }

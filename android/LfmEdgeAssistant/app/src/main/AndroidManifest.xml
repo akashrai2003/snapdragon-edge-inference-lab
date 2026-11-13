@@ -39,6 +39,7 @@
 
         <activity
             android:name=".FloatingAssistantActivity"
+            android:taskAffinity="${applicationId}.floating"
             android:theme="@style/Theme.FloatingAssistant"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"

@@ -14,8 +14,8 @@ android {
         minSdk = 29
         ndk { abiFilters.add("arm64-v8a") }
         targetSdk = 33
-        versionCode = 7
-        versionName = "3.3.1"
+        versionCode = 8
+        versionName = "3.3.2"
         testInstrumentationRunner = "ai.snapdragon.edge.VoiceIntegrationProbe"
     }
 
