@@ -35,11 +35,15 @@ object StreamDecoder {
             val choices = json.optJSONArray("choices") ?: return
             if (choices.length() == 0) return
             val choice = choices.getJSONObject(0)
-            val content = choice.optJSONObject("delta")?.opt("content")
-            // JSON null is an object, not the string "null". Reasoning is never answer content.
+            val delta = choice.optJSONObject("delta")
+            val content = delta?.opt("content")
+            val reasoning = delta?.opt("reasoning_content")
             if (content is String && content.isNotEmpty()) {
                 text.append(content)
                 token(content)
+            } else if (reasoning is String && reasoning.isNotEmpty()) {
+                text.append(reasoning)
+                token(reasoning)
             }
             val finish = choice.opt("finish_reason")
             if (finish is String && finish.isNotBlank()) {

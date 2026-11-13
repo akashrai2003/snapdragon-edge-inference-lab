@@ -596,7 +596,8 @@ with open('index.html', 'wb') as f:
 
 # 2. Patch bundle.CeTg3Otq.js (Side-by-Side Mic Button + STT Fetch)
 python3 -c "
-with open('/tmp/llama_ui_dist/_app/immutable/bundle.CeTg3Otq.js', 'r') as f:
+with open('/tmp/llama_ui_dist/_app/immutable(y)&&b(E):!0)),Q=K(()=>d()&&b(y)&&!b(E));enr(W,{get canSend(){return b(X)},get disabled(){return a()},get showErrorState(){return b(Q)},get tooltipLabel(){return b(S)}})}};be(G,W=>{s()&&!n()?W(z):b(T)?W($,1):W(V,-1)})'
+new_jrr = '$=W=>{Hrr(W,{get disabled(){return a()},get hasAudioModality(){return !0},get isLoading(){return s()},get isRecording(){return l()},get onMicClick(){return e.onMicClick}})},V=W=>{{Hrr(W,{get disabled(){/bundle.CeTg3Otq.js', 'r') as f:
     c = f.read()
 
 # Replace button mounting in jrr

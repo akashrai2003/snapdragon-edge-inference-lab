@@ -193,22 +193,20 @@ class VoiceWakeService : Service() {
             )
 
     private fun present(detected: Long, autoListen: Boolean = true) {
-        setStatus("Cue heard you. Tap to open.")
+        setStatus("Cue heard you")
         if (getSystemService(KeyguardManager::class.java).isKeyguardLocked) return
         runCatching {
             (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(
                 VibrationEffect.createOneShot(35, VibrationEffect.DEFAULT_AMPLITUDE)
             )
         }
-        if (Settings.canDrawOverlays(this)) showOpeningCard(detected, autoListen)
-        else
-            runCatching {
-                startActivity(
-                    floatingIntent()
-                        .putExtra("wake_detected_at", detected)
-                        .putExtra("auto_listen", autoListen)
-                )
-            }
+        runCatching {
+            startActivity(
+                floatingIntent()
+                    .putExtra("wake_detected_at", detected)
+                    .putExtra("auto_listen", autoListen)
+            )
+        }
         android.util.Log.i(
             "CueTiming",
             "wake_dispatch_ms=${SystemClock.elapsedRealtime()-detected}",

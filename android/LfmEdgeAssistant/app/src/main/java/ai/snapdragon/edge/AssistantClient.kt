@@ -186,10 +186,9 @@ object AssistantClient {
                     .put("temperature", .7)
                     .put("stream", true)
                     .put("cache_prompt", true)
-            // The installed hybrid model defaults to thinking, delaying the first spoken word.
-            // Per-request template control avoids changing other clients or typed conversations.
-            if (quickVoice)
-                body.put("chat_template_kwargs", JSONObject().put("enable_thinking", false))
+            val userText = history.lastOrNull { it.role == "user" }?.content.orEmpty().lowercase()
+            val wantsThinking = userText.contains("think deeply") || userText.contains("show your reasoning") || userText.contains("thought process")
+            body.put("chat_template_kwargs", JSONObject().put("enable_thinking", wantsThinking))
             request.check()
             connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
             if (connection.responseCode != 200)

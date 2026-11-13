@@ -14,7 +14,7 @@ fi
 killall -9 whisper-server 2>/dev/null || pkill -9 -f whisper-server 2>/dev/null
 
 echo "Starting whisper-server for STT (base.en) on 0.0.0.0:8081..."
-nohup env LD_LIBRARY_PATH="$BASE_DIR/lib" "$BASE_DIR/bin/whisper-server" \
+nohup env LD_LIBRARY_PATH="$BASE_DIR/lib:$HOME/whisper/lib:$HOME/llama_cpp/lib:/data/local/tmp/llama.cpp/lib" "$BASE_DIR/bin/whisper-server" \
   -m /sdcard/Download/whisper/models/ggml-base.en.bin \
   --host 0.0.0.0 \
   --port 8081 \
