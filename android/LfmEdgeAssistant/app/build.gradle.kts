@@ -11,8 +11,9 @@ android {
         applicationId = "ai.snapdragon.edge"
         minSdk = 29
         targetSdk = 33
-        versionCode = 4
-        versionName = "3.1.0"
+        versionCode = 5
+        versionName = "3.2.0"
+        testInstrumentationRunner = "ai.snapdragon.edge.VoiceIntegrationProbe"
     }
 
     buildTypes {

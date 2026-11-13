@@ -350,7 +350,7 @@ class MainActivity : CueActivity() {
             body,
             text(
                     this,
-                    "Say “Hey Cue” to open your assistant. Offline speech recognition pauses while you chat or play an answer. Hands-free is experimental and may use extra battery.",
+                    "Say “Hey Cue” to open your assistant. While a conversation is on, ask a follow-up or say “Hey Cue” to interrupt. Hands-free is experimental and may use extra battery.",
                     14f,
                     muted,
                 )
@@ -386,6 +386,78 @@ class MainActivity : CueActivity() {
                 }
             },
             top = 4,
+        )
+        add(
+            body,
+            Switch(this).apply {
+                text = "Quick voice answers"
+                textSize = 14f
+                setTextColor(ink)
+                minHeight = dp(this@MainActivity, 52)
+                isChecked = voicePreferences.getBoolean("quick_voice_replies", true)
+                setOnCheckedChangeListener { _, checked ->
+                    voicePreferences.edit().putBoolean("quick_voice_replies", checked).apply()
+                }
+            },
+            top = 4,
+        )
+        add(
+            body,
+            text(
+                this,
+                "Reply sooner for everyday questions. Turn off to allow more thinking on difficult questions.",
+                13f,
+                muted,
+            ),
+            top = 6,
+        )
+        add(
+            body,
+            Switch(this).apply {
+                text = "Interrupt without “Hey Cue”"
+                textSize = 14f
+                setTextColor(ink)
+                minHeight = dp(this@MainActivity, 52)
+                isChecked = voicePreferences.getBoolean("open_interruption", false)
+                setOnCheckedChangeListener { _, checked ->
+                    voicePreferences.edit().putBoolean("open_interruption", checked).apply()
+                }
+            },
+            top = 4,
+        )
+        add(
+            body,
+            text(
+                this,
+                "Respond to other speech while answering. Nearby voices may interrupt too. Leave off in busy places.",
+                13f,
+                muted,
+            ),
+            top = 6,
+        )
+        add(
+            body,
+            Switch(this).apply {
+                text = "Keep the conversation going"
+                textSize = 14f
+                setTextColor(ink)
+                minHeight = dp(this@MainActivity, 52)
+                isChecked = voicePreferences.getBoolean("continue_conversation", true)
+                setOnCheckedChangeListener { _, checked ->
+                    voicePreferences.edit().putBoolean("continue_conversation", checked).apply()
+                }
+            },
+            top = 4,
+        )
+        add(
+            body,
+            text(
+                this,
+                "After a voice answer, Cue listens for your next question for up to 8 seconds. Say “end conversation” or tap End to finish. Listening stops when you leave Cue. Nearby voices can be picked up in this window; turn this off in noisy places. Review before sending pauses automatic conversation.",
+                13f,
+                muted,
+            ),
+            top = 6,
         )
         add(
             body,

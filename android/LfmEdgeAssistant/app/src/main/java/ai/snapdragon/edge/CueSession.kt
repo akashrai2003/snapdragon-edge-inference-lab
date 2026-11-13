@@ -62,6 +62,7 @@ object CueSession {
         private set
 
     private var generationId = 0
+    private var pendingSendId = 0
     private var controlId = 0
     private var healthPending = false
     private var lastPaint = 0L
@@ -163,7 +164,7 @@ object CueSession {
     }
 
     fun select(id: String) {
-        if (generating) stop()
+        stop()
         persist()
         current = threads.first { it.id == id }
         attachment = null
@@ -173,7 +174,7 @@ object CueSession {
     }
 
     fun fresh() {
-        if (generating) stop()
+        stop()
         val thread =
             CueThread(UUID.randomUUID().toString(), "A new thought", System.currentTimeMillis())
         threads.add(0, thread)
@@ -191,7 +192,7 @@ object CueSession {
     }
 
     fun delete(id: String) {
-        if (current.id == id && generating) stop()
+        if (current.id == id) stop()
         val removed = threads.find { it.id == id }
         removed?.messages?.mapNotNull { it.imagePath }?.forEach { java.io.File(it).delete() }
         threads.removeAll { it.id == id }
@@ -279,9 +280,14 @@ object CueSession {
         if (generating || (prompt.isEmpty() && attachment == null)) return
         current.draft = prompt
         if (!ready) {
+            val pending = ++pendingSendId
             val intendedThread = current.id
             setEngine(true) {
-                if (current.id == intendedThread && current.draft == prompt)
+                if (
+                    pendingSendId == pending &&
+                        current.id == intendedThread &&
+                        current.draft == prompt
+                )
                     send(prompt, spokenRequest)
             }
             return
@@ -311,6 +317,12 @@ object CueSession {
         val active = AssistantClient.Request()
         request = active
         generating = true
+        val speech =
+            if (spokenRequest && VoiceReplyPreferences.enabled(app)) SpeechOutput.begin(app)
+            else null
+        val quickVoice =
+            spokenRequest &&
+                VoiceReplyPreferences.store(app).getBoolean("quick_voice_replies", true)
         val start = SystemClock.elapsedRealtime()
         lastCheckpoint = start
         lastPaint = start
@@ -319,12 +331,18 @@ object CueSession {
         generation.execute {
             var first = true
             val result = runCatching {
-                AssistantClient.streamReply(context, active) { token ->
+                AssistantClient.streamReply(context, active, quickVoice, spokenRequest) { token ->
                     handler.post {
                         if (generationId != task || !generating) return@post
                         answer.content += token
+                        SpeechOutput.append(speech, token)
                         if (first) {
                             first = false
+                            CueDiagnostics.timing(
+                                app,
+                                "reply_first_token_ms",
+                                SystemClock.elapsedRealtime() - start,
+                            )
                             android.util.Log.i(
                                 "CueTiming",
                                 "first_token_ms=${SystemClock.elapsedRealtime()-start}",
@@ -352,10 +370,10 @@ object CueSession {
                     .onSuccess {
                         answer.content = it.text
                         answer.state = if (it.finishReason == "length") "length" else "complete"
-                        if (spokenRequest && VoiceReplyPreferences.enabled(app))
-                            SpeechOutput.read(app, answer.content)
+                        SpeechOutput.finish(speech)
                     }
                     .onFailure {
+                        SpeechOutput.cancel(speech)
                         answer.state = if (active.cancelled.get()) "stopped" else "failed"
                         if (!active.cancelled.get())
                             notice =
@@ -372,6 +390,8 @@ object CueSession {
     }
 
     fun stop() {
+        pendingSendId++
+        SpeechOutput.stop()
         if (!generating) return
         request?.cancel()
         request = null

@@ -20,6 +20,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -65,6 +66,31 @@ class CueChatView(
     private val voicePanel = column(activity)
     private val voiceLabel = text(activity, "I’m listening.", 26f, ink, "serif")
     private val wave = row(activity)
+    private val conversationBar = row(activity)
+    private val conversationLabel = text(activity, "Conversation on", 12f, plum)
+    private val interruptButton = button(activity, "Interrupt") { interruptAndListen() }
+    private var conversationActive = false
+    private var conversationThread = ""
+    private var waitingForAnswer = false
+    private var monitoringInterruption = false
+    private var interrupting = false
+    private var followUpListening = false
+    private var followUpPending = false
+    private var nextMonitorAt = 0L
+    private var monitorErrors = 0
+    private var voiceEpoch = 0
+    private val reconcile = Runnable { reconcileConversation() }
+    private val resumeListening = Runnable {
+        followUpPending = false
+        if (conversationActive && !destroyed) startVoice(followUp = true)
+    }
+    private val conversationTimeout = Runnable {
+        if (conversationActive) {
+            endConversation(stopAnswer = true)
+            error.text = "Conversation paused. Tap the microphone when you’re ready."
+            error.visibility = View.VISIBLE
+        }
+    }
     private val error = text(activity, "", 13f, muted)
     private val attachmentLabel = text(activity, "Image attached · Remove", 12f, plum)
     private val latest =
@@ -85,7 +111,10 @@ class CueChatView(
     private var follow = true
     private var destroyed = false
     private val waves = mutableListOf<View>()
-    private val observed = { render() }
+    private val observed = {
+        render()
+        scheduleConversation()
+    }
 
     init {
         orientation = VERTICAL
@@ -138,6 +167,19 @@ class CueChatView(
         add(voicePanel, controls, -1, -2, 10)
         add(this, voicePanel, -1, -2, 8)
         voicePanel.visibility = View.GONE
+        conversationBar.gravity = Gravity.CENTER_VERTICAL
+        conversationBar.background = background(activity, lilac, 18)
+        conversationBar.setPadding(
+            dp(activity, 12),
+            dp(activity, 3),
+            dp(activity, 4),
+            dp(activity, 3),
+        )
+        add(conversationBar, conversationLabel, 0, -2, weight = 1f)
+        add(conversationBar, interruptButton, -2, 44)
+        add(conversationBar, button(activity, "End") { endConversation(stopAnswer = true) }, -2, 44)
+        add(this, conversationBar, -1, -2, 8)
+        conversationBar.visibility = View.GONE
         add(this, error, -1, -2, 6)
         error.visibility = View.GONE
         add(this, attachmentLabel, -1, 40, 4)
@@ -210,7 +252,7 @@ class CueChatView(
         )
         action.setOnClickListener {
             when {
-                CueSession.generating -> CueSession.stop()
+                CueSession.generating -> endConversation(stopAnswer = true)
                 voiceState != "idle" -> cancelVoice()
                 input.text.isNotBlank() || CueSession.attachment != null -> send()
                 else -> startVoice()
@@ -230,6 +272,7 @@ class CueChatView(
     }
 
     private fun send() {
+        cancelVoice()
         SpeechOutput.stop()
         CueSession.send(input.text.toString())
     }
@@ -245,6 +288,7 @@ class CueChatView(
 
     fun render() {
         if (destroyed) return
+        updateConversationBar()
         val t = CueSession.current
         val list = if (compact) t.messages.takeLast(2) else t.messages
         val key = t.id + ":" + list.joinToString { it.id }
@@ -434,7 +478,7 @@ class CueChatView(
         input.isEnabled = voiceState == "idle"
     }
 
-    fun startVoice() {
+    fun startVoice(followUp: Boolean = false) {
         if (destroyed || CueSession.generating || voiceState != "idle") return
         if (
             activity.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
@@ -443,13 +487,28 @@ class CueChatView(
             permission()
             return
         }
+        if (!followUp) {
+            val prefs = VoiceReplyPreferences.store(activity)
+            conversationActive =
+                prefs.getBoolean("continue_conversation", true) &&
+                    !prefs.getBoolean("review_voice", false)
+            conversationThread = CueSession.current.id
+        }
+        followUpListening = followUp
+        followUpPending = false
+        waitingForAnswer = false
+        monitoringInterruption = false
+        interrupting = false
+        voiceTurn.cancel()
+        val epoch = ++voiceEpoch
         SpeechOutput.stop()
+        if (VoiceReplyPreferences.enabled(activity)) SpeechOutput.warm(activity)
         AudioGate.hold("voice-input")
         voiceState = "preparing"
         voiceLabel.text = "Getting ready…"
         showVoice()
         AudioGate.whenQuiet { quiet ->
-            if (destroyed || voiceState != "preparing") return@whenQuiet
+            if (destroyed || epoch != voiceEpoch || voiceState != "preparing") return@whenQuiet
             if (!quiet) {
                 cancelVoice()
                 error.text = "The microphone is busy. Try again in a moment."
@@ -457,7 +516,7 @@ class CueChatView(
                 return@whenQuiet
             }
             voiceState = "recording"
-            voiceLabel.text = "I’m listening."
+            voiceLabel.text = if (followUp) "Anything else?" else "I’m listening."
             updateAction()
             voicePreview.text = ""
             if (voiceTurn.supported) {
@@ -498,7 +557,7 @@ class CueChatView(
                 recorder.startRecording(
                     onRmsChanged = { db ->
                         handler.post {
-                            if (voiceState == "recording")
+                            if (voiceEpoch == epoch && voiceState == "recording")
                                 waves.forEachIndexed { i, v ->
                                     v.layoutParams =
                                         v.layoutParams.apply {
@@ -515,9 +574,10 @@ class CueChatView(
                                 }
                         }
                     },
-                    onSilenceDetected = { handler.post { finishVoice() } },
+                    onSilenceDetected = { handler.post { if (voiceEpoch == epoch) finishVoice() } },
                     onError = {
                         handler.post {
+                            if (voiceEpoch != epoch) return@post
                             cancelVoice()
                             error.text = "Couldn’t use the microphone. You can type instead."
                             error.visibility = View.VISIBLE
@@ -569,28 +629,57 @@ class CueChatView(
     }
 
     private fun finishRecognizedVoice(value: String) {
+        val wasFollowUp = followUpListening || interrupting
+        followUpListening = false
+        interrupting = false
+        monitoringInterruption = false
         voiceState = "idle"
         voicePanel.visibility = View.GONE
         scroll.visibility = View.VISIBLE
         AudioGate.release("voice-input")
-        if (value.isBlank()) {
-            error.text = "I didn’t catch that. Tap the microphone to try again."
+        val decision = ConversationPolicy.classify(value, "", false)
+        if (decision.intent == ConversationPolicy.Intent.END) {
+            endConversation(stopAnswer = true)
+            return
+        }
+        if (value.isBlank() || decision.intent == ConversationPolicy.Intent.INTERRUPT) {
+            cancelVoice()
+            error.text =
+                if (wasFollowUp) "Conversation paused. Say “Hey Cue” whenever you need me."
+                else "I didn’t catch that. Tap the microphone to try again."
             error.visibility = View.VISIBLE
         } else {
-            insertDraft(value)
+            insertDraft(decision.text)
             val preferences = activity.getSharedPreferences("mira", Context.MODE_PRIVATE)
             if (preferences.getBoolean("review_voice", false)) {
                 error.text = "Your words are ready. Edit them or tap Send."
                 error.visibility = View.VISIBLE
             } else {
                 error.visibility = View.GONE
-                CueSession.send(value, spokenRequest = true)
+                waitingForAnswer = conversationActive
+                monitorErrors = 0
+                nextMonitorAt = 0L
+                handler.removeCallbacks(conversationTimeout)
+                if (conversationActive) handler.postDelayed(conversationTimeout, 180000)
+                CueSession.send(decision.text, spokenRequest = true)
+                scheduleConversation()
             }
         }
         updateAction()
     }
 
     fun cancelVoice() {
+        voiceEpoch++
+        conversationActive = false
+        waitingForAnswer = false
+        monitoringInterruption = false
+        interrupting = false
+        followUpListening = false
+        followUpPending = false
+        handler.removeCallbacks(reconcile)
+        handler.removeCallbacks(resumeListening)
+        handler.removeCallbacks(conversationTimeout)
+        conversationBar.visibility = View.GONE
         voiceTurn.cancel()
         transcription?.cancel()
         transcription = null
@@ -602,7 +691,172 @@ class CueChatView(
         updateAction()
     }
 
+    private fun updateConversationBar() {
+        conversationBar.visibility = if (conversationActive) View.VISIBLE else View.GONE
+        conversationLabel.text =
+            when {
+                voiceState != "idle" -> "Conversation on · Listening"
+                followUpPending -> "Your turn next"
+                monitorErrors >= 2 -> "Conversation on · Tap to interrupt"
+                monitoringInterruption -> "Say “Hey Cue” to interrupt"
+                else -> "Conversation on"
+            }
+        interruptButton.visibility =
+            if (voiceState == "idle" && waitingForAnswer) View.VISIBLE else View.GONE
+    }
+
+    private fun scheduleConversation(delay: Long = 0) {
+        if (!conversationActive || destroyed) return
+        handler.removeCallbacks(reconcile)
+        handler.postDelayed(reconcile, delay)
+    }
+
+    private fun reconcileConversation() {
+        if (!conversationActive || destroyed) return
+        if (CueSession.current.id != conversationThread) {
+            cancelVoice()
+            return
+        }
+        updateConversationBar()
+        if (voiceState != "idle" || !waitingForAnswer) return
+        val busy = CueSession.generating || CueSession.starting || SpeechOutput.speaking
+        if (busy) {
+            if (
+                !CueSession.starting &&
+                    !voiceTurn.active &&
+                    !monitoringInterruption &&
+                    monitorErrors < 2
+            ) {
+                val wait = nextMonitorAt - SystemClock.elapsedRealtime()
+                if (wait > 0) scheduleConversation(wait) else monitorInterruption()
+            }
+        } else {
+            // All queued audio must finish before starting the follow-up microphone window.
+            waitingForAnswer = false
+            voiceTurn.cancel()
+            monitoringInterruption = false
+            AudioGate.release("voice-input")
+            if (CueSession.notice != null) {
+                cancelVoice()
+                return
+            }
+            followUpPending = true
+            handler.removeCallbacks(resumeListening)
+            handler.postDelayed(resumeListening, 650)
+            updateConversationBar()
+        }
+    }
+
+    private fun interruptionDecision(value: String): ConversationPolicy.Decision =
+        ConversationPolicy.classify(
+            value,
+            if (SpeechOutput.speaking) SpeechOutput.echoText else "",
+            true,
+            VoiceReplyPreferences.store(activity).getBoolean("open_interruption", false),
+        )
+
+    private fun monitorInterruption() {
+        if (!voiceTurn.supported) {
+            monitorErrors = 2
+            updateConversationBar()
+            return
+        }
+        monitoringInterruption = true
+        AudioGate.hold("voice-input")
+        val began =
+            voiceTurn.start(
+                onLevel = {},
+                onPartial = { value ->
+                    if (interrupting)
+                        voicePreview.text = ConversationPolicy.classify(value, "", false).text
+                    else acceptInterruption(interruptionDecision(value))
+                },
+                onFinishing = {
+                    if (interrupting) {
+                        voiceState = "transcribing"
+                        voiceLabel.text = "One moment…"
+                        updateAction()
+                    }
+                },
+                onFinal = { value ->
+                    monitoringInterruption = false
+                    if (!interrupting) acceptInterruption(interruptionDecision(value))
+                    if (interrupting) {
+                        val decision = ConversationPolicy.classify(value, "", false)
+                        if (
+                            decision.intent == ConversationPolicy.Intent.INTERRUPT ||
+                                value.isBlank()
+                        ) {
+                            voiceState = "idle"
+                            interrupting = false
+                            followUpPending = true
+                            handler.postDelayed(resumeListening, 250)
+                        } else finishRecognizedVoice(value)
+                    } else if (conversationActive) {
+                        AudioGate.release("voice-input")
+                        nextMonitorAt = SystemClock.elapsedRealtime() + 350
+                        scheduleConversation(350)
+                    }
+                    updateConversationBar()
+                },
+                onError = {
+                    monitoringInterruption = false
+                    AudioGate.release("voice-input")
+                    if (interrupting) {
+                        cancelVoice()
+                        error.text =
+                            "Couldn’t hear that interruption. Tap the microphone to try again."
+                        error.visibility = View.VISIBLE
+                    } else {
+                        monitorErrors++
+                        nextMonitorAt = SystemClock.elapsedRealtime() + 1000
+                        scheduleConversation(1000)
+                        updateConversationBar()
+                    }
+                },
+            )
+        if (!began) {
+            monitoringInterruption = false
+            AudioGate.release("voice-input")
+            monitorErrors = 2
+        }
+        updateConversationBar()
+    }
+
+    private fun acceptInterruption(decision: ConversationPolicy.Decision) {
+        if (!conversationActive || decision.intent == ConversationPolicy.Intent.ECHO) return
+        if (decision.intent == ConversationPolicy.Intent.END) {
+            endConversation(stopAnswer = true)
+            return
+        }
+        interrupting = true
+        waitingForAnswer = false
+        voiceState = "recording"
+        // Keep this recognizer alive: restarting would lose the start of the user's question.
+        CueSession.stop()
+        voiceLabel.text = "I’m listening."
+        voicePreview.text = decision.text
+        showVoice()
+        updateConversationBar()
+        CueDiagnostics.event(activity, "conversation_interruption")
+    }
+
+    private fun interruptAndListen() {
+        if (!conversationActive) return
+        voiceTurn.cancel()
+        monitoringInterruption = false
+        waitingForAnswer = false
+        CueSession.stop()
+        startVoice(followUp = true)
+    }
+
+    private fun endConversation(stopAnswer: Boolean) {
+        cancelVoice()
+        if (stopAnswer) CueSession.stop()
+    }
+
     fun dispose() {
+        cancelVoice()
         destroyed = true
         voiceTurn.cancel()
         CueSession.remove(observed)

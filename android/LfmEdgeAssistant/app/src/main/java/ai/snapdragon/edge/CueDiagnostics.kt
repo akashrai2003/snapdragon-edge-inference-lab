@@ -31,6 +31,8 @@ object CueDiagnostics {
             if (prefs.contains("wake_to_draw_ms"))
                 "${prefs.getLong("wake_to_draw_ms",0)} ms (last event)"
             else "Not measured"
-        return "Wake to panel draw: $latency\nWake matches: ${prefs.getLong("wake_match_count",0)}\nLast recognition error: ${prefs.getLong("recognition_error",0)}\n\nThese are local diagnostic samples, not a latency or battery benchmark. No speech or conversation text is recorded here."
+        fun sample(key: String) =
+            if (prefs.contains(key)) "${prefs.getLong(key, 0)} ms" else "Not measured"
+        return "Wake to panel draw: $latency\nWake matches: ${prefs.getLong("wake_match_count",0)}\nLast recognition error: ${prefs.getLong("recognition_error",0)}\n\nReply to first token: ${sample("reply_first_token_ms")}\nSpeech session to first audio: ${sample("speech_first_audio_ms")}\nInterruptions: ${prefs.getLong("conversation_interruption_count", 0)}\n\nThese are local diagnostic samples, not a latency or battery benchmark. No speech or conversation text is recorded here."
     }
 }
