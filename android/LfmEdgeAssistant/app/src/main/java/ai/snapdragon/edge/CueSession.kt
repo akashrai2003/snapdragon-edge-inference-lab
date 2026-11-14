@@ -17,6 +17,8 @@ data class CueMessage(
     var content: String,
     var state: String = "complete",
     val imagePath: String? = null,
+    val webRequested: Boolean = false,
+    var sources: List<WebSource> = emptyList(),
 )
 
 data class CueThread(
@@ -41,6 +43,9 @@ object CueSession {
         private set
 
     var generating = false
+        private set
+
+    var taskStatus: String? = null
         private set
 
     var starting = false
@@ -102,6 +107,14 @@ object CueSession {
                                 if (it == "streaming") "interrupted" else it
                             },
                             m.opt("image") as? String,
+                            m.optBoolean("web_requested", false),
+                            m.optJSONArray("sources")
+                                ?.let { values ->
+                                    (0 until minOf(values.length(), 6)).mapNotNull {
+                                        WebSource.fromJson(values.getJSONObject(it))
+                                    }
+                                }
+                                .orEmpty(),
                         )
                     )
                 }
@@ -275,7 +288,11 @@ object CueSession {
         }
     }
 
-    fun send(value: String = current.draft, spokenRequest: Boolean = false) {
+    fun send(
+        value: String = current.draft,
+        spokenRequest: Boolean = false,
+        searchWeb: Boolean = false,
+    ) {
         val prompt = value.trim().take(18000)
         if (generating || (prompt.isEmpty() && attachment == null)) return
         current.draft = prompt
@@ -288,11 +305,23 @@ object CueSession {
                         current.id == intendedThread &&
                         current.draft == prompt
                 )
-                    send(prompt, spokenRequest)
+                    send(prompt, spokenRequest, searchWeb)
             }
             return
         }
         val image = attachment
+        if (image != null && (searchWeb || WebRequest.explicit(prompt))) {
+            notice =
+                "Image web search isn’t available yet. Remove the image to search, or ask Cue about it."
+            notifyViews()
+            return
+        }
+        val useWeb = image == null && (searchWeb || WebRequest.explicit(prompt))
+        if (useWeb && prompt.length > 2000) {
+            notice = "Try a shorter or more focused web question."
+            notifyViews()
+            return
+        }
         current.draft = ""
         attachment = null
         notice = null
@@ -303,13 +332,15 @@ object CueSession {
                 role = "user",
                 content = prompt.ifEmpty { "What can you tell me about this image?" },
                 imagePath = image,
+                webRequested = useWeb,
             )
         current.messages.add(user)
         val context =
             current.messages
                 .filter { it.role == "user" || it.state in listOf("complete", "length", "stopped") }
                 .map { it.copy() }
-        val answer = CueMessage(role = "assistant", content = "", state = "streaming")
+        val answer =
+            CueMessage(role = "assistant", content = "", state = "streaming", webRequested = useWeb)
         current.messages.add(answer)
         current.updated = System.currentTimeMillis()
         val threadId = current.id
@@ -317,6 +348,7 @@ object CueSession {
         val active = AssistantClient.Request()
         request = active
         generating = true
+        taskStatus = if (useWeb) "Searching the web…" else null
         val speech =
             if (spokenRequest && VoiceReplyPreferences.enabled(app)) SpeechOutput.begin(app)
             else null
@@ -331,7 +363,7 @@ object CueSession {
         generation.execute {
             var first = true
             val result = runCatching {
-                AssistantClient.streamReply(context, active, quickVoice, spokenRequest) { token ->
+                val receive: (String) -> Unit = { token ->
                     handler.post {
                         if (generationId != task || !generating) return@post
                         answer.content += token
@@ -359,10 +391,39 @@ object CueSession {
                         }
                     }
                 }
+                if (useWeb) {
+                    WebResearchAgent()
+                        .run(
+                            prompt,
+                            active,
+                            spokenRequest,
+                            status = { value ->
+                                handler.post {
+                                    if (generationId == task && generating) {
+                                        taskStatus = value
+                                        notifyViews()
+                                    }
+                                }
+                            },
+                            sourcesChanged = { sources ->
+                                handler.post {
+                                    if (generationId == task && generating) {
+                                        answer.sources = sources
+                                        notifyViews()
+                                    }
+                                }
+                            },
+                            diagnostic = { name, value -> CueDiagnostics.timing(app, name, value) },
+                            token = receive,
+                        )
+                        .answer
+                } else
+                    AssistantClient.streamReply(context, active, quickVoice, spokenRequest, receive)
             }
             handler.post {
                 if (generationId != task) return@post
                 generating = false
+                taskStatus = null
                 request = null
                 handler.removeCallbacks(paint)
                 paintPending = false
@@ -377,7 +438,9 @@ object CueSession {
                         answer.state = if (active.cancelled.get()) "stopped" else "failed"
                         if (!active.cancelled.get())
                             notice =
-                                "That answer was interrupted. Your question is saved—tap Retry."
+                                if (it is WebResearchException) it.userMessage
+                                else
+                                    "That answer was interrupted. Your question is saved—tap Retry."
                     }
                 persist()
                 notifyViews()
@@ -397,6 +460,7 @@ object CueSession {
         request = null
         generationId++
         generating = false
+        taskStatus = null
         current.messages.lastOrNull { it.state == "streaming" }?.state = "stopped"
         handler.removeCallbacks(paint)
         paintPending = false
@@ -412,7 +476,7 @@ object CueSession {
         if (user?.role == "user") {
             current.messages.removeAt(current.messages.lastIndex)
             attachment = user.imagePath
-            send(user.content)
+            send(user.content, searchWeb = user.webRequested)
         }
     }
 
@@ -444,6 +508,11 @@ object CueSession {
                         .put("content", message.content)
                         .put("state", message.state)
                         .put("image", message.imagePath ?: JSONObject.NULL)
+                        .put("web_requested", message.webRequested)
+                        .put(
+                            "sources",
+                            JSONArray().apply { message.sources.forEach { put(it.toJson()) } },
+                        )
                 )
             }
             array.put(

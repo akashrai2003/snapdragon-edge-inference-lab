@@ -95,14 +95,15 @@ def main():
     parser.add_argument("--serial")
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--model", action="store_true")
+    parser.add_argument("--web", action="store_true")
     parser.add_argument(
         "--recovery",
         action="store_true",
         help="Also kill the idle process and verify sticky recovery",
     )
     args = parser.parse_args()
-    if args.quiet and args.model:
-        parser.error("Run quiet and model probes separately.")
+    if sum((args.quiet, args.model, args.web)) > 1:
+        parser.error("Run quiet, model and web probes separately.")
     if args.recovery and not args.quiet:
         parser.error("Use --recovery with --quiet, with hands-free already enabled.")
     adb = ["adb"] + (["-s", args.serial] if args.serial else [])
@@ -117,6 +118,8 @@ def main():
         command.extend(["-e", "quiet", "true"])
     if args.model:
         command.extend(["-e", "model", "true"])
+    if args.web:
+        command.extend(["-e", "web", "true"])
     command.append(f"{PACKAGE}.test/{PACKAGE}.VoiceIntegrationProbe")
     success = False
     try:

@@ -567,7 +567,7 @@ class MainActivity : CueActivity() {
             body,
             text(
                     this,
-                    "Your chats and images stay on this phone. Voice input uses your existing speech assistant; wake detection uses Android’s on-device speech recognition. No analytics. Read aloud uses an installed offline voice.",
+                    "Chats, images and voice recognition stay on this phone. When you choose web search, Cue sends a public search query to DuckDuckGo and opens relevant websites. Earlier chat and images are excluded. No analytics. Read aloud uses an installed offline voice.",
                     12f,
                     muted,
                 )

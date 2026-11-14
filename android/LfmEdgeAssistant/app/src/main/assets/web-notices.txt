@@ -1,0 +1,15 @@
+Cue web tools use these unmodified open-source libraries:
+
+OkHttp 4.12.0 — Copyright Square, Inc. — Apache-2.0
+https://github.com/square/okhttp/tree/parent-4.12.0
+
+Okio 3.6.0 (OkHttp dependency) — Copyright Square, Inc. — Apache-2.0
+https://github.com/square/okio/tree/3.6.0
+
+The Apache license is included as web-apache-license.txt.
+
+jsoup 1.24.1 — Copyright Jonathan Hedley — MIT
+https://jsoup.org/
+The jsoup MIT license is included in META-INF/jsoup/LICENSE.
+
+DuckDuckGo is an external website, not a bundled search index. Search availability and results are controlled by that service. Cue is not affiliated with DuckDuckGo. No source from the assistant reference repositories is bundled by this feature.

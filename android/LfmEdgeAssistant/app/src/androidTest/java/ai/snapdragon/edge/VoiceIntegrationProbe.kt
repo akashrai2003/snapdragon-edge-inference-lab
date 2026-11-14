@@ -12,17 +12,19 @@ import android.os.SystemClock
 class VoiceIntegrationProbe : Instrumentation() {
     private var modelSample = false
     private var quietCheck = false
+    private var webCheck = false
 
     override fun onCreate(arguments: Bundle?) {
         super.onCreate(arguments)
         modelSample = arguments?.getString("model") == "true"
         quietCheck = arguments?.getString("quiet") == "true"
+        webCheck = arguments?.getString("web") == "true"
         start()
     }
 
     override fun onStart() {
-        if (quietCheck) {
-            val result = QuietWakeChecks.run(this)
+        if (quietCheck || webCheck) {
+            val result = if (webCheck) WebIntegrationChecks.run(this) else QuietWakeChecks.run(this)
             finish(
                 if (result.getString("result") == "PASS") Activity.RESULT_OK
                 else Activity.RESULT_CANCELED,

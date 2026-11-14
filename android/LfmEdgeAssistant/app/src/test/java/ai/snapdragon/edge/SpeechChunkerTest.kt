@@ -84,4 +84,17 @@ class SpeechChunkerTest {
         )
         assertTrue(result.none { it.contains('*') || it.contains('▪') || it.contains('✱') })
     }
+
+    @Test
+    fun `source citations are visible in chat but omitted from speech`() {
+        val text = "The official guide explains it [1]. Another source agrees [2, 3]."
+        for (parts in listOf(listOf(text), text.map { it.toString() })) {
+            val chunks = SpeechChunker()
+            val result = parts.flatMap { chunks.append(it) } + chunks.finish()
+            assertEquals(
+                listOf("The official guide explains it.", "Another source agrees."),
+                result,
+            )
+        }
+    }
 }

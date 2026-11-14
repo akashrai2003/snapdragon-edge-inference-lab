@@ -86,6 +86,7 @@ class SpeechChunker {
         fun clean(value: String): String =
             value
                 .replace(Regex("!?\\[([^]]*)]\\([^)]*\\)"), "$1")
+                .replace(Regex("\\[\\d+(?:\\s*,\\s*\\d+)*]"), "")
                 .replace(Regex("https?://\\S+"), "link")
                 .replace(Regex("(?m)^\\s*(?:#{1,6}\\s*|[-+*•·‣⁃▪▫●○◆◇►▸>]\\s+|\\d+[.)]\\s+)"), "")
                 .replace(Regex("\\\\([*_`~#>\\[\\]])"), "$1")
@@ -95,6 +96,7 @@ class SpeechChunker {
                 .replace(" & ", " and ")
                 .replace(Regex("[\\p{So}\\p{Sk}]"), "")
                 .replace(Regex("\\s+"), " ")
+                .replace(Regex("\\s+([.,!?;:])"), "$1")
                 .trim()
     }
 }

@@ -14,8 +14,8 @@ android {
         minSdk = 29
         ndk { abiFilters.add("arm64-v8a") }
         targetSdk = 33
-        versionCode = 8
-        versionName = "3.3.2"
+        versionCode = 9
+        versionName = "3.4.0"
         testInstrumentationRunner = "ai.snapdragon.edge.VoiceIntegrationProbe"
     }
 
@@ -40,6 +40,8 @@ android {
 dependencies {
     implementation("com.alphacephei:vosk-android:0.3.75@aar")
     implementation("net.java.dev.jna:jna:5.18.1@aar")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jsoup:jsoup:1.24.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }

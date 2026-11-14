@@ -1,6 +1,6 @@
 # On-phone orchestration: implementation plan
 
-Status: proposed implementation, informed by the pinned source review. No new runtime capability or benchmark is claimed here.
+Status: architecture roadmap. The bounded phone-only search/read runner is implemented in Cue 3.4.0; see [SEARCH_FINDINGS.md](SEARCH_FINDINGS.md) for its actual scope and limitations. The remaining milestones and evaluation suite are proposed, not delivered features or benchmark results.
 
 ## Runtime and data flow
 

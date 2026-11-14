@@ -10,7 +10,7 @@ The phone model owns the task: choose a tool, observe its result, decide the nex
 
 **No always-on computer is required.** Search networking, browser execution, native integrations and task state run on Android. OmniRoute is an optional phone-local proxy for remote model APIs; a remote LLM still runs at its provider. Internet access is needed for web search and cloud delegation.
 
-This directory contains research and a concrete implementation specification. It does **not** add these capabilities to the installed app. Cue 3.3.2 was left running without an installation, microphone test, new permission, provider login, Docker operation, or model change during this research.
+The initial research left Cue 3.3.2 unchanged. The first search/tool slice is now implemented in Cue 3.4.0; see [search findings and delivery](SEARCH_FINDINGS.md) and [physical validation](../../design/CUE_VALIDATION.md). Native app actions, owned-browser control, MCP, memory and optional remote-model delegation remain planned.
 
 ## What was done
 
@@ -52,11 +52,11 @@ For richer UI automation, study OpenClaw's snapshot-bound Android actions and Mo
 
 There is a concrete distribution constraint: Google Play prohibits general autonomous planning/execution through AccessibilityService outside the qualifying accessibility-tool exemption. A broad consumer voice assistant does not qualify merely because voice control is useful. OpenClaw's inspected Play flavor returns unavailable for mobile UI control, while its third-party flavor implements it. Plan a research/sideload flavor for that experiment; keep supported native integrations and Cue-owned browser tools independent of it. [Google Play AccessibilityService policy](https://support.google.com/googleplay/android-developer/answer/10964491).
 
-## Recommended first delivery
+## First delivery and next steps
 
-Implement the tool-call protocol and a **phone-only web-answer flow** first: spoken request → local model chooses search → phone retrieves evidence → local model gives a sourced answer. Add open-app/maps/alarm actions alongside it. That makes the on-device orchestration claim observable before adding general UI control or cloud assistance.
+The delivered tool-call protocol and **phone-only web-answer flow** use: spoken request → local model chooses search → phone reads the returned pages in parallel → local model gives a sourced answer. Add open-app/maps/alarm actions alongside it. That makes the on-device orchestration claim observable before adding general UI control or cloud assistance.
 
-The model publisher documents LFM3-VL's `qwen3_coder`-style tool calls and tool schemas. Cue's current `AssistantClient` sends chat/image messages and `StreamDecoder` reads answer content; neither is an agent executor. The installed GGUF template/parser and streaming `tool_calls` behavior must be qualified with a dry-run suite. Published model support is not a measured task-success result on this phone. [LFM3-VL model card](https://huggingface.co/LiquidAI/LFM3-VL-2B).
+The model publisher documents LFM3-VL's `qwen3_coder`-style tool calls and tool schemas. The first delivered runner now executes bounded native search/read tool calls. The installed GGUF/template/parser emitted valid streaming `tool_calls`, and a benign phone search/read/answer passed. Broader tool-call accuracy and the proposed dry-run suite remain unmeasured. [LFM3-VL model card](https://huggingface.co/LiquidAI/LFM3-VL-2B).
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for components, interfaces, milestones and acceptance gates; [SOURCE_REVIEW.md](SOURCE_REVIEW.md) for all repository findings; and [evaluation_cases.json](evaluation_cases.json) for the initial unexecuted task set.
 

@@ -17,7 +17,9 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -60,6 +62,9 @@ class CueChatView(
     val scroll = BoundedScroll(activity)
     private val transcript = column(activity)
     private val input: EditText
+    private var webSelected = false
+    private var webButton: TextView? = null
+    private val sourceSignatures = mutableMapOf<String, String>()
     private val action = FrameLayout(activity)
     private val actionText = text(activity, "↑", 24f, Color.WHITE)
     private val actionIcon = ImageView(activity)
@@ -97,7 +102,7 @@ class CueChatView(
     private val latest =
         button(activity, "Jump to latest ↓") {
             follow = true
-            scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+            scroll.post { scroll.scrollTo(0, transcript.height) }
         }
     private val recorder = VoiceRecorder()
     private val voiceTurn = VoiceTurn(activity)
@@ -186,6 +191,21 @@ class CueChatView(
         add(this, attachmentLabel, -1, 40, 4)
         attachmentLabel.visibility = View.GONE
         attachmentLabel.setOnClickListener { CueSession.attach(null) }
+        val tools = row(activity)
+        webButton =
+            button(activity, "⌕  Search web") {
+                    if (!CueSession.generating) {
+                        webSelected = !webSelected
+                        webButton?.text =
+                            if (webSelected) "✓  Search this question" else "⌕  Search web"
+                        webButton?.contentDescription =
+                            if (webSelected) "Web search on for this question"
+                            else "Search the web for this question"
+                    }
+                }
+                .apply { contentDescription = "Search the web for this question" }
+        add(tools, webButton!!, -2, 44)
+        add(this, tools, -1, -2, 3)
         val composer =
             row(activity).apply {
                 background = background(activity, Color.WHITE, 28, Color.parseColor("#E3DDE7"))
@@ -275,7 +295,9 @@ class CueChatView(
     private fun send() {
         cancelVoice()
         SpeechOutput.stop()
-        CueSession.send(input.text.toString())
+        CueSession.send(input.text.toString(), searchWeb = webSelected)
+        webSelected = false
+        webButton?.text = "⌕  Search web"
     }
 
     fun insertDraft(value: String) {
@@ -296,6 +318,7 @@ class CueChatView(
         if (signature != key) {
             signature = key
             targets.clear()
+            sourceSignatures.clear()
             transcript.removeAllViews()
             follow = true
             if (list.isEmpty()) welcome() else list.forEach { message(it) }
@@ -305,7 +328,7 @@ class CueChatView(
                 val display =
                     when {
                         message.content.isEmpty() && message.state == "streaming" ->
-                            "Cue is thinking…"
+                            CueSession.taskStatus ?: "Cue is thinking…"
                         message.content.isEmpty() -> "No answer yet."
                         else -> message.content
                     }
@@ -316,6 +339,84 @@ class CueChatView(
             }
             transcript.findViewWithTag<TextView>("speech-${message.id}")?.text =
                 if (SpeechOutput.speaking) "Stop speaking" else "Read aloud"
+            transcript.findViewWithTag<LinearLayout>("sources-${message.id}")?.let { box ->
+                val sourceKey =
+                    message.sources.joinToString {
+                        "${it.id}:${it.url}:${it.title}:${it.pageRead}:${it.readError}"
+                    } + message.state
+                if (sourceSignatures[message.id] != sourceKey) {
+                    sourceSignatures[message.id] = sourceKey
+                    box.removeAllViews()
+                    val cards = row(activity)
+                    if (message.sources.isNotEmpty()) {
+                        add(box, text(activity, "Sources", 12f, muted), top = 6)
+                        add(
+                            box,
+                            HorizontalScrollView(activity).apply {
+                                isHorizontalScrollBarEnabled = false
+                                addView(cards)
+                            },
+                            -1,
+                            -2,
+                            3,
+                        )
+                    }
+                    message.sources.forEach { source ->
+                        val card =
+                            column(activity).apply {
+                                setPadding(dp(activity, 3), 0, dp(activity, 8), 0)
+                            }
+                        add(
+                            card,
+                            button(activity, "[${source.id}]  ${source.title.take(70)}  ↗") {
+                                    openWeb(source.url)
+                                }
+                                .apply {
+                                    maxLines = 3
+                                    ellipsize = android.text.TextUtils.TruncateAt.END
+                                },
+                            -1,
+                            -2,
+                            5,
+                        )
+                        add(
+                            card,
+                            text(
+                                activity,
+                                (java.net.URI(source.url).host.orEmpty() +
+                                    " · " +
+                                    if (source.pageRead) "Page read"
+                                    else if (source.readError != null)
+                                        "Search result · page unavailable"
+                                    else "Search result"),
+                                11f,
+                                muted,
+                            ),
+                        )
+                        add(cards, card, 205, -2)
+                    }
+                    if (message.webRequested && message.state != "streaming") {
+                        val question =
+                            t.messages
+                                .takeWhile { it.id != message.id }
+                                .lastOrNull { it.role == "user" }
+                                ?.content
+                                .orEmpty()
+                        add(
+                            box,
+                            button(activity, "Open search  ↗") {
+                                openWeb(
+                                    "https://duckduckgo.com/?q=" +
+                                        java.net.URLEncoder.encode(question, "UTF-8")
+                                )
+                            },
+                            -1,
+                            44,
+                            5,
+                        )
+                    }
+                }
+            }
             transcript.findViewWithTag<TextView>("state-${message.id}")?.apply {
                 text =
                     when (message.state) {
@@ -335,10 +436,19 @@ class CueChatView(
             updatingDraft = false
         }
         attachmentLabel.visibility = if (CueSession.attachment != null) View.VISIBLE else View.GONE
+        if (CueSession.attachment != null) webSelected = false
+        webButton?.apply {
+            isEnabled = !CueSession.generating && CueSession.attachment == null
+            alpha = if (isEnabled) 1f else .5f
+            text = if (webSelected) "✓  Search this question" else "⌕  Search web"
+            contentDescription =
+                if (webSelected) "Web search on for this question"
+                else "Search the web for this question"
+        }
         error.text = CueSession.notice.orEmpty()
         error.visibility = if (CueSession.notice != null) View.VISIBLE else View.GONE
         updateAction()
-        if (follow) scroll.post { if (!destroyed && follow) scroll.fullScroll(View.FOCUS_DOWN) }
+        if (follow) scroll.post { if (!destroyed && follow) scroll.scrollTo(0, transcript.height) }
     }
 
     private fun welcome() {
@@ -370,6 +480,14 @@ class CueChatView(
         )
         add(transcript, text(c, "A question, an idea, or a fresh start.", 13f, muted), top = 12)
         val starters = column(c)
+        add(
+            starters,
+            button(c, "Find something on the web  ↗") {
+                insertDraft("Search the web for ")
+                input.requestFocus()
+            },
+            top = 10,
+        )
         add(
             starters,
             button(c, "Spark an idea  ↗") {
@@ -426,6 +544,7 @@ class CueChatView(
         targets[message.id] = body
         add(box, body, top = 9)
         if (message.role == "assistant") {
+            add(box, column(c).apply { tag = "sources-${message.id}" }, -1, -2, 5)
             val actions = row(c)
             add(
                 actions,
@@ -461,6 +580,19 @@ class CueChatView(
             )
         }
         add(transcript, box, top = 10)
+    }
+
+    private fun openWeb(url: String) {
+        if (PublicWebUrl.canonical(url) == null) return
+        runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            .onFailure {
+                Toast.makeText(
+                        activity,
+                        "No browser is available for that link.",
+                        Toast.LENGTH_SHORT,
+                    )
+                    .show()
+            }
     }
 
     private fun updateAction() {
@@ -686,7 +818,8 @@ class CueChatView(
                 nextMonitorAt = 0L
                 handler.removeCallbacks(conversationTimeout)
                 if (conversationActive) handler.postDelayed(conversationTimeout, 180000)
-                CueSession.send(decision.text, spokenRequest = true)
+                CueSession.send(decision.text, spokenRequest = true, searchWeb = webSelected)
+                webSelected = false
                 scheduleConversation()
             }
         }

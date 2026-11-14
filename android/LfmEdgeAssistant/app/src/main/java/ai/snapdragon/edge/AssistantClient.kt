@@ -17,19 +17,32 @@ object AssistantClient {
 
     class Request {
         val cancelled = AtomicBoolean(false)
-        @Volatile private var connection: HttpURLConnection? = null
+        private val cancellationLock = Any()
+        private var cancelActive: (() -> Unit)? = null
 
         fun attach(value: HttpURLConnection) {
-            connection = value
-            if (cancelled.get()) {
-                value.disconnect()
+            attachCancellation { value.disconnect() }
+        }
+
+        fun attachCancellation(cancel: () -> Unit) {
+            val alreadyCanceled =
+                synchronized(cancellationLock) {
+                    cancelActive = cancel
+                    cancelled.get()
+                }
+            if (alreadyCanceled) {
+                cancel()
                 throw CancellationException()
             }
         }
 
         fun cancel() {
-            cancelled.set(true)
-            connection?.disconnect()
+            val action =
+                synchronized(cancellationLock) {
+                    cancelled.set(true)
+                    cancelActive
+                }
+            runCatching { action?.invoke() }
         }
 
         fun check() {
@@ -187,7 +200,10 @@ object AssistantClient {
                     .put("stream", true)
                     .put("cache_prompt", true)
             val userText = history.lastOrNull { it.role == "user" }?.content.orEmpty().lowercase()
-            val wantsThinking = userText.contains("think deeply") || userText.contains("show your reasoning") || userText.contains("thought process")
+            val wantsThinking =
+                userText.contains("think deeply") ||
+                    userText.contains("show your reasoning") ||
+                    userText.contains("thought process")
             body.put("chat_template_kwargs", JSONObject().put("enable_thinking", wantsThinking))
             request.check()
             connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }

@@ -4,6 +4,8 @@
 
 ## Implemented
 
+- Web answers: tap **Search web** for a question, or say “Hey Cue, search the web for…”. The phone model requests search; phone-owned HTTPS reads all returned pages (up to four) in parallel and the same local model answers from combined, context-budgeted excerpts with source cards. Individual page failures remain visible. No search API key or always-on computer is required. Internet access is needed; upstream sites can limit/block access. The Open search button hands off to your browser.
+
 - Home with everyday language, artwork, text/voice entry, and useful starters. Runtime controls live in Settings/status.
 - Compact floating panel with bounded transcript height, automatic speech endpointing/submission (optional transcription review), real microphone-level waveform, Cancel/Done, image attachment, and text input.
 - Quick voice answers uses the installed model’s non-thinking mode per voice request, avoiding a hidden reasoning delay. Turn it off in Settings to allow more thinking on difficult questions. Typed requests keep the default model behavior; server defaults and other clients are unchanged.
@@ -27,6 +29,8 @@
 The app uses the existing phone services at `127.0.0.1:8080` (answers/vision), `8081` (Whisper fallback transcription), and `8082` (runtime control). Voice capture and wake recognition use the bundled offline Vosk model and app-owned AudioRecord, with bounded endpointing and cancellation. The Android microphone indicator stays visible while hands-free is enabled; Turn off releases capture. There is no app-level system-volume muting. Speech is submitted automatically by default; Settings can enable review before sending, optional spoken replies, and continued conversation. Continued conversation defaults on for voice requests and is visibly indicated; spoken replies still default off. Expanding the panel ends hands-free listening while retaining the thread and active answer; tap the microphone in the full view to resume conversation. The user confirmed the original wake → record → stop on silence → send flow and that the new quiet wake path opens Cue on the connected phone. No hosted chat API or analytics is configured. The app does not invoke a platform/cloud recognizer for wake or voice turns. Missing model/native/microphone support stops hands-free quietly; reopening Cue retries an enabled listener. Hands-free remains experimental and can consume battery.
 
 The existing model/speech daemons still bind to all network interfaces as configured before this update, preserving the user's existing laptop workflow. The app itself permits cleartext only to loopback. Restricting those daemons to loopback, adding deliberate LAN sharing, stronger application-to-daemon authentication, and a persistent app-owned runtime are follow-up work.
+
+Web search sends a focused query to DuckDuckGo and requests selected public websites. Only the current explicit web question is provided to the research model; earlier chat, images and account cookies are excluded. Images cannot be combined with web search yet. Source link metadata is saved with the answer; fetched page text and snippets are not saved. Ordinary chat uses the existing phone endpoint.
 
 Saved chats and imported images stay in private app storage and are excluded from Android backups. Delete all conversations also removes private attachments and the old migration preferences. No raw microphone audio or recognition transcripts are written to diagnostic logs or counters.
 
@@ -54,12 +58,14 @@ python3 scripts/verify_voice_device.py --quiet
 python3 scripts/verify_voice_device.py --quiet --recovery
 # Optional real-model timing/Stop sample; removes its temporary thread afterward:
 python3 scripts/verify_voice_device.py --model
+# Live public HTTPS search/read + local model + source-card UI (temporary synthetic thread):
+python3 scripts/verify_voice_device.py --web
 adb uninstall ai.snapdragon.edge.test
 ```
 
 The native instrumentation probe restores the original review/speech preferences, selected thread, and draft. It never submits microphone input: review is forced on for its recognition checks. Instrumentation stops the normal app process; the helper restores previously enabled wake capture from the foreground after a successful probe and waits for capture readiness. The quiet helper then verifies floating opening again **outside instrumentation**, whose background-start privileges could otherwise hide a real launch failure. Leave the phone on Home untouched during these checks. Finish all automated tests before asking for a live voice check. The probe APK is separate from the shipped app.
 
-Cue 3.3 targets the arm64 phone and packages the pinned offline English model and native runtime; the debug APK is approximately 53 MB. Model weights/native libraries are not committed to Git. The preparation script validates the official archive’s SHA-256; Gradle verifies that prepared assets exist. Vosk 0.3.75 and JNA 5.18.1 are packaged with the updated Android plugin for 16 KB compatibility. Both native ZIP offsets and ELF LOAD/RELRO layout are checked before installation. The rejected sherpa keyword-spotting experiment and checksum-pinned asset preparation are documented under `research/keyword-spotting/`; those binaries/models are ignored by Git and are not packaged.
+Cue 3.4 targets the arm64 phone and packages the pinned offline English model and native runtime; the debug APK is approximately 53 MB. Model weights/native libraries are not committed to Git. The preparation script validates the official archive’s SHA-256; Gradle verifies that prepared assets exist. Vosk 0.3.75 and JNA 5.18.1 are packaged with the updated Android plugin for 16 KB compatibility. Both native ZIP offsets and ELF LOAD/RELRO layout are checked before installation. The rejected sherpa keyword-spotting experiment and checksum-pinned asset preparation are documented under `research/keyword-spotting/`; those binaries/models are ignored by Git and are not packaged.
 
 ## Runtime controller
 
@@ -69,13 +75,15 @@ Before the device update, controller scripts were backed up under `/sdcard/Downl
 
 ## Remaining work
 
+- Broader search quality/freshness tests and latency profiling, optional providers, bounded persistent caching/backoff, web follow-up context, claim/citation verification, JavaScript/PDF handling and the planned owned browser. A single successful sourced answer does not establish general search reliability.
+
 - Measure real spoken wake latency, missed/false activations, long idle/background/locked behavior, and paired unplugged battery use. A successful UI-opening probe is not a wake accuracy benchmark.
 - Benchmark long idle battery/CPU use, phonetic confusables, and background reliability of the continuous Vosk path. A 45-second stable-capture check is not a battery or wake-accuracy benchmark.
 - Develop/train/select a dedicated acoustic wake model that actually recognizes Cue reliably. The tested small KWS model failed both a user trial and synthetic Cue samples and was removed from the shipped path.
 - Measure real barge-in latency, speaker echo/false interruptions, headset/Bluetooth routing, recognition gaps, follow-up timeout and long-session battery use. A text echo filter cannot provide full acoustic echo cancellation or speaker identification.
 - Profile time to first visible model token separately from the TTS handoff; current samples are dominated by model response startup.
 - Test voice input/noise, Read aloud, image/Share providers, accessibility at large font sizes, process recreation, and long chat archives more broadly.
-- Token-accurate prompt budgeting, larger-history database storage, structured profiling of prefill/decode/transcription, and controlled context/cache tuning. No new throughput claim is made here.
+- Token-accurate budgeting for ordinary chat/history (web tools now use the actual rendered prompt/tokenizer), larger-history database storage, structured profiling of prefill/decode/transcription, and controlled context/cache tuning. No new throughput claim is made here.
 - Runtime ownership/reboot recovery, cooperative server termination, default loopback inference with explicit LAN sharing, stronger IPC/authentication, and staged SDK/toolchain/release-signing migration.
 - Explicit user-initiated screen context, speaker verification/enrollment, custom wake phrases, and multilingual speech models. These are not shipped capabilities.
 
@@ -83,4 +91,4 @@ See [Cue validation](design/CUE_VALIDATION.md) for delivered behavior and test r
 
 See `design/VOICE_NEXT_STEPS.md` for the audio/omni evaluation plan and current limits.
 
-See [on-phone assistant architecture](research/assistant-architecture/README.md) for the 25-repository source review and the proposed search, native actions, phone browser, MCP, memory and optional larger-model delegation plan. These are researched next steps, not features shipped in Cue 3.3.2.
+See [on-phone assistant architecture](research/assistant-architecture/README.md) for the 25-repository source review and the proposed search, native actions, phone browser, MCP, memory and optional larger-model delegation plan. The bounded web-search slice is delivered in Cue 3.4.0; native actions, interactive browser control, MCP, memory and cloud delegation remain next steps. See [search implementation and limits](research/assistant-architecture/SEARCH_FINDINGS.md).

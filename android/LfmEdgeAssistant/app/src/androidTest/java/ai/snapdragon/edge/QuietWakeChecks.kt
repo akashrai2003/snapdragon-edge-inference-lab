@@ -23,6 +23,8 @@ object QuietWakeChecks {
         val preferences = VoiceReplyPreferences.store(context)
         val hadReview = preferences.contains("review_voice")
         val review = preferences.getBoolean("review_voice", false)
+        val hadHandsfree = preferences.contains("handsfree")
+        val handsfree = preferences.getBoolean("handsfree", false)
         var activity: Activity? = null
         var panel: Activity? = null
         var draft: String? = null
@@ -88,16 +90,13 @@ object QuietWakeChecks {
                 VoiceWakeService.start(context)
             }
             SystemClock.sleep(400)
-            onMain(probe) {
-                activity?.finish()
-                activity = null
-            }
-            ParcelFileDescriptor.AutoCloseInputStream(
-                    probe.uiAutomation.executeShellCommand("input keyevent KEYCODE_HOME")
-                )
-                .use { it.readBytes() }
+            // Keep Cue paused underneath Home. Finishing it first can resume the previous
+            // app and a vendor app-lock screen during the capture baseline transition.
+            goHome(probe)
             await(probe, "wake capture ready", 10000) {
-                VoiceWakeService.isCapturing && QuietSpeechSession.captureSessionId >= 0
+                VoiceWakeService.isCapturing &&
+                    !AudioGate.held &&
+                    QuietSpeechSession.captureSessionId >= 0
             }
             var initial = -1
             var starts = 0L
@@ -122,7 +121,7 @@ object QuietWakeChecks {
                         VoiceWakeService.isCapturing &&
                             QuietSpeechSession.captureSessionId == initial
                     ) {
-                        "Wake microphone restarted during idle"
+                        "Idle capture changed: active=${VoiceWakeService.isCapturing}, session=${QuietSpeechSession.captureSessionId}, expected=$initial, foregroundOwner=${AudioGate.held}"
                     }
                     check(
                         context
@@ -210,6 +209,8 @@ object QuietWakeChecks {
             val restore = preferences.edit()
             if (hadReview) restore.putBoolean("review_voice", review)
             else restore.remove("review_voice")
+            if (hadHandsfree) restore.putBoolean("handsfree", handsfree)
+            else restore.remove("handsfree")
             restore.commit()
         }
         return report
